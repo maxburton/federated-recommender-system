@@ -1,0 +1,120 @@
+    
+\documentclass[11pt]{article}
+\usepackage{times}
+    \usepackage{fullpage}
+    
+    \title{Audio feedback for gesture recognition}
+    \author{John Williamson 9804750w}
+
+    \begin{document}
+    \maketitle
+    
+    
+     
+
+
+
+\section{Proposal}\label{proposal}
+
+\subsection{Motivation}\label{motivation}
+
+Gesture recognition offers the opportunity to add controls to a myriad of sensing
+devices, particularly on mobile devices with limited control inputs. However, the
+resulting interfaces are hard to interpret. Adding auditory feedback to indicate
+the progress and success of gesture recognition could improve the usability of
+gesture recognition systems.
+
+
+\subsection{Aims}\label{aims}
+
+This project will develop a software framework for systematically exploring
+audio feedback options for gesture recognition. This will be a modular visual
+programming environment that allows various gesture recognisers to be configured
+and their output processed and fed to audio synthesis devices. The effectiveness
+of the project in improving gesture usability will be experimentally validated.
+
+\section{Progress}\label{progress}
+
+\begin{itemize}
+    \tightlist
+\item Language and GUI framework chosen: project will be implemented in Java,
+using Swing for GUI development.
+\item Software architecture outlined and basic class structure written.
+\item  Background research conducted on gesture recognition technologies and
+feedback mechanisms.
+\item  Interfacing to inertial sensing unit in Java completed.
+\item  Initial version of GUI developed, which allows basic signal processing to
+be applied to mouse input, with interchangable blocks.
+\item  Basic finite state machine gesture recogniser implemented.
+\item  Initial MIDI note based output implemented and working. Limited to
+pitch mapping.
+\end{itemize}
+
+\section{Problems and risks}\label{problems-and-risks}
+
+\subsection{Problems}\label{problems}
+
+The following issues were encountered in the project so far.
+\begin{itemize}
+    \tightlist
+\item Inertial sensing unit had unsupported and out-of-date drivers. Some tricky
+fixes had to be applied to get inputs.
+\item Many different types of gesture recognition; not clear which ones to focus
+on.
+\item Implemented FSM recogniser is not robust.
+\item Significant latency issues in rendering audio via Java with default audio
+generation libraries.
+\end{itemize}
+
+\subsection{Risks}\label{risks}
+
+\begin{itemize}
+\tightlist
+\item   Many different gesture recognisers to explore. \textbf{Mitigation}: will narrow
+down to three possibilities by start of next semester.
+\item Unclear how to evaluate success of the project. \textbf{Mitigation}: will do
+background research to investigate how success of audio recognition has
+been performed in the research literature.
+\item Inertial sensing device seems to be unreliable. \textbf{No clear mitigation available at this stage}
+\end{itemize}
+    
+\section{Plan}\label{plan}
+
+\subsection{Semester 2}
+
+\begin{itemize}
+    \tightlist
+    \item
+      Week 1-2: develop visual programming interface. \textbf{Deliverable:}
+      complete interface that allows components to be added, removed and
+      rearranged.
+    \item
+      Week 3-5: implement three recognisers and test them with a standard
+      recognition task. \textbf{Deliverable:} tested recognisers with
+      initial performance metrics and integration with visual programming
+      environment.
+    \item
+      Week 6: research on how to best evaluate performance of final system.
+      \textbf{Deliverable:} detailed evaluation plan, with participant
+      numbers, information sheet and analysis plan.
+    \item
+      Week 7-9: final implementation and improvements to audio rendering.
+      \textbf{Deliverable: polished software ready, passing basic tests,
+      ready for evaluation stage.}
+    \item
+      Week 9: evaluation experiments run. \textbf{Deliverable: quantitative
+      measures of usability and qualitative measures of effectiveness for at
+      least ten users.}
+    \item
+      Week 8-10: Write up. \textbf{Deliverable: first draft submitted to
+      supervisor two weeks before final deadline.}
+    \end{itemize}
+    
+
+\section{Ethics}
+
+This project will involve tests with human users.  These will be user studies
+using standard hardware, and require no personally identifiable information to be captured.
+I have verified that the experiments I plan to do comply with the Ethics Checklist.
+
+\end{document}
