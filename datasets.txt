@@ -1,0 +1,5 @@
+Movielens: http://grouplens.org/datasets/movielens/ (very large, can be split into several groups to test federating algorithms or combined with another movie dataset)
+Jester: http://eigentaste.berkeley.edu/dataset/ (high density ~30%)
+Book Crossings: http://www2.informatik.uni-freiburg.de/~cziegler/BX/
+Last.fm: http://grouplens.org/datasets/hetrec-2011/ (Music and the social network around it)
+Wikipedia: https://en.wikipedia.org/wiki/Wikipedia:Database_download#English-language_Wikipedia (Not designed for RS, but very large dataset)
