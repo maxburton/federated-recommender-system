@@ -1,4 +1,7 @@
 Movielens: http://grouplens.org/datasets/movielens/ (very large, can be split into several groups to test federating algorithms or combined with another movie dataset)
+Filmtrust/CiaoDVD: https://www.librec.net/datasets.html (Can work in tandem with Movielens)
+Netflix Prize dataset: http://academictorrents.com/details/9b13183dc4d60676b773c9e2cd6de5e5542cee9a (Can work in tandem with Movielens. Also useful to see this dataset as it was used in the Netflix RS Competition)
+Yahoo music/movies: https://webscope.sandbox.yahoo.com/catalog.php?datatype=r (Can work in tandem with Movielens or Last.fm)
 Jester: http://eigentaste.berkeley.edu/dataset/ (high density ~30%)
 Book Crossings: http://www2.informatik.uni-freiburg.de/~cziegler/BX/
 Last.fm: http://grouplens.org/datasets/hetrec-2011/ (Music and the social network around it)
