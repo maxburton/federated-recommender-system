@@ -53,3 +53,17 @@
 
 ## 10 Oct 2019
 * *1 hour* Reading through the chapters Nikos recommended for me via email
+
+## Week 3
+
+## 12 Oct 2019
+* *1 hour* Researching Item2Vec
+
+## 13 Oct 2019
+* *2 hours* Installing and experimenting with light.fm (spotlight had compatibility errors)
+
+## 15 Oct 2019
+* *1 hour* Reading Nikos' email about different algorithm mappings
+
+## 16 Oct 2019
+* *2 hours* Experimenting with light.fm
