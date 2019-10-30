@@ -4,36 +4,45 @@ from lightfm.evaluation import auc_score
 import numpy as np
 from lightfm.datasets import fetch_movielens
 
-movielens = fetch_movielens()
 
-train = movielens['train']
-test = movielens['test']
+class LightFMAlg:
 
-# BPR Loss Function
-model = LightFM(learning_rate=0.05, loss='bpr')
-model.fit(train, epochs=10)
+    dataset = None
 
-train_precision = precision_at_k(model, train, k=10).mean()
-test_precision = precision_at_k(model, test, k=10, train_interactions=train).mean()
+    def __init__(self, dataset):
+        self.dataset = dataset
 
-train_auc = auc_score(model, train).mean()
-test_auc = auc_score(model, test, train_interactions=train).mean()
+    movielens = fetch_movielens()
 
-print('Precision: train %.2f, test %.2f.' % (train_precision, test_precision))
-print('AUC: train %.2f, test %.2f.' % (train_auc, test_auc))
+    train = movielens['train']
+    test = movielens['test']
 
-# WARP Loss Function
-model = LightFM(learning_rate=0.05, loss='warp')
+    # BPR Loss Function
+    model = LightFM(learning_rate=0.05, loss='bpr')
+    model.fit(train, epochs=10)
 
-model.fit_partial(train, epochs=10)
+    train_precision = precision_at_k(model, train, k=10).mean()
+    test_precision = precision_at_k(model, test, k=10, train_interactions=train).mean()
 
-train_precision = precision_at_k(model, train, k=10).mean()
-test_precision = precision_at_k(model, test, k=10, train_interactions=train).mean()
+    train_auc = auc_score(model, train).mean()
+    test_auc = auc_score(model, test, train_interactions=train).mean()
 
-train_auc = auc_score(model, train).mean()
-test_auc = auc_score(model, test, train_interactions=train).mean()
+    print('Precision: train %.2f, test %.2f.' % (train_precision, test_precision))
+    print('AUC: train %.2f, test %.2f.' % (train_auc, test_auc))
 
-print('Precision: train %.2f, test %.2f.' % (train_precision, test_precision))
-print('AUC: train %.2f, test %.2f.' % (train_auc, test_auc))
+    # WARP Loss Function
+    model = LightFM(learning_rate=0.05, loss='warp')
 
-# Suggests that WARP is superior to BPR
+    model.fit_partial(train, epochs=10)
+
+    train_precision = precision_at_k(model, train, k=10).mean()
+    test_precision = precision_at_k(model, test, k=10, train_interactions=train).mean()
+
+    train_auc = auc_score(model, train).mean()
+    test_auc = auc_score(model, test, train_interactions=train).mean()
+
+    print('Precision: train %.2f, test %.2f.' % (train_precision, test_precision))
+    print('AUC: train %.2f, test %.2f.' % (train_auc, test_auc))
+
+    # Suggests that WARP is superior to BPR
+
