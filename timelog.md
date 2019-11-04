@@ -91,3 +91,7 @@
 * *4 hours* Implemented data slicing functions
 * *2 hours* Implemented testing and added some unit tests
 * *1 hour* Implemeneted logging
+
+## Week 6
+
+* *6 hours* Added tests for each data slicing function, and added/fixed some of them

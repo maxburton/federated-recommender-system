@@ -6,3 +6,8 @@ class Error(Exception):
 class MissingArgumentException(Error):
     """Raised when a required argument is not provided"""
     pass
+
+
+class InvalidShapeException(Error):
+    """Raised when an invalid shape is provided"""
+    pass

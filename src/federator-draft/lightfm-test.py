@@ -6,10 +6,11 @@ import logging
 import logging.config
 from lightfm.datasets import fetch_movielens
 import data_handler
+from definitions import ROOT_DIR
 
 
 class LightFMAlg:
-    logging.config.fileConfig('logging.conf')
+    logging.config.fileConfig(ROOT_DIR + 'logging.conf', disable_existing_loggers=False)
     log = logging.getLogger(__name__)
     dataset = [1, 2, 3]
     data_slicer = data_handler.DataSlicer(dataset)
