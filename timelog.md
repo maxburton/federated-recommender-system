@@ -67,3 +67,27 @@
 
 ## 16 Oct 2019
 * *2 hours* Experimenting with light.fm
+
+## 17 Oct 2019
+* *1 hour* Meeting with Nikos
+
+## Week 4
+
+## 21 Oct 2019
+* *2 hours* Researching spotlight
+
+## 24 Oct 2019
+* *2 hours* Researching metrics/evaluation and how to order dataset
+
+## Week 5
+
+## 31 Oct 2019
+* *1 hour* Meeting with Nikos
+
+## 02 Nov 2019
+* *2 hours* Research about how to slice data and created a plan for tomorrow
+
+## 03 Nov 2019
+* *4 hours* Implemented data slicing functions
+* *2 hours* Implemented testing and added some unit tests
+* *1 hour* Implemeneted logging
