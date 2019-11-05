@@ -1,9 +1,8 @@
 import unittest
 import numpy as np
-import logging
 import logging.config
 from definitions import ROOT_DIR
-from exceptions import MissingArgumentException, InvalidShapeException
+import exceptions as ex
 
 from data_handler import DataHandler
 
@@ -51,7 +50,7 @@ class TestDataHandler(unittest.TestCase):
     """
 
     def test_sort_dataset_by_col_raises_missing_argument_exception(self):
-        self.assertRaises(MissingArgumentException, DataHandler)
+        self.assertRaises(ex.MissingArgumentException, DataHandler)
 
     def test_init_reads_from_file_with_correct_matrix(self):
         data = DataHandler(filename=self.ML100K_PATH, dtype=np.uint32, cols=4)
@@ -63,15 +62,15 @@ class TestDataHandler(unittest.TestCase):
         self.assertEqual(data.get_dataset()[0][399999], 879959583)
 
     def test_invalid_cols_raises_exceptions(self):
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=7)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=3)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=99)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=400001)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=7)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=3)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=99)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=400001)
         self.assertRaises(ZeroDivisionError, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=0)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-4)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-7)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-400000)
-        self.assertRaises(InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-800001)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-4)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-7)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-400000)
+        self.assertRaises(ex.InvalidShapeException, DataHandler, filename=self.ML100K_PATH, dtype=np.uint32, cols=-800001)
 
     """
     Tests the extract whole entries method
@@ -108,7 +107,7 @@ class TestDataHandler(unittest.TestCase):
     def test_splits_are_correct_length(self):
         data = DataHandler(filename=self.ML100K_PATH, dtype=np.uint32, cols=4)
         splits = 10
-        split = data.split_dataset(splits)  # nice, even split
+        split = data.split_dataset_evenly(splits)  # nice, even split
         self.assertTrue(len(split) == splits)
         self.assertTrue(len(split[0]) == 10000)
         self.assertTrue(len(split[5]) == 10000)
@@ -116,7 +115,7 @@ class TestDataHandler(unittest.TestCase):
 
         data = DataHandler(filename=self.ML100K_PATH, dtype=np.uint32, cols=4)
         splits = 7
-        split = data.split_dataset(splits)  # ugly split
+        split = data.split_dataset_evenly(splits)  # ugly split
         self.assertTrue(len(split) == splits)
         first_split_len = len(split[0])
         for i in range(splits):  # test that each split is +- 1 of the original split
@@ -137,6 +136,19 @@ class TestDataHandler(unittest.TestCase):
         self.assertTrue(np.count_nonzero(sort[:, 1] == 1) >= (splits * 2))
         for i in range(splits):
             self.assertTrue(np.count_nonzero(split[i][:, 1] == 1) > 1)
+
+    def test_ratio_split(self):
+        data = DataHandler(filename=self.ML100K_PATH, dtype=np.uint32, cols=4)
+        split_array = data.split_dataset_by_ratio(2, [0.8, 0.2])
+        self.assertTrue(len(split_array) == len(data.get_dataset()))
+        split_array = data.split_dataset_by_ratio(3, [0.123456789, 0.376543211, 0.5])
+        self.assertTrue(len(split_array) == len(data.get_dataset()))
+
+        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, 2, [0.1, 0.89])
+        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, 2, [0.1, 0.91])
+
+        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, 3, [0.1, 0.9])
+        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, 1, [0.1, 0.9])
 
 
 if __name__ == '__main__':

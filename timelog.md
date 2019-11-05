@@ -94,4 +94,8 @@
 
 ## Week 6
 
+## 04 Nov 2019
 * *6 hours* Added tests for each data slicing function, and added/fixed some of them
+
+## 05 Nov 2019
+* *5 hours* Continued with data handling functions
