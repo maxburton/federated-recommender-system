@@ -99,3 +99,4 @@
 
 ## 05 Nov 2019
 * *5 hours* Continued with data handling functions
+* *2 hours* Started creating the main algorithm handler class

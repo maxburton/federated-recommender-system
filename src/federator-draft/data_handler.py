@@ -49,7 +49,7 @@ class DataHandler:
             weaved_ds = np.vstack((weaved_ds, ds[i::num_of_partitions]))
         return weaved_ds
 
-    def extract_whole_entries(self, n, upper=None, lower=1, col=1, ds=None, delete=True):
+    def extract_whole_entries(self, n, lower=1, upper=None, col=1, ds=None, delete=True):
         if ds is None:
             ds = self.dataset
         if upper is None:
