@@ -1,0 +1,2 @@
+-Build an item-item collaborative engine (e.g. takes 1 movie as input and returns k-neighbours similar movies)
+-Build a user-item collaborative engine (e.g. based on all your ratings, return k-neighbours based on similar user's tastes)

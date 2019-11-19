@@ -103,3 +103,19 @@
 
 ## 06 Nov 2019
 * *1 hour* Meeting with Nikos
+
+## Week 7
+
+## 11 Nov 2019
+* *2 hours* Reading through Richard's thesis, specifically to understand multi-engine mappings and how to implement them
+
+## 13 Nov 2019
+* *1 hour* Meeting with Nikos
+
+## Week 8
+
+## 18 Nov 2019
+* *2 hours* Researching item-item and user-item collaborative filtering preparing to implement
+
+## 19 Nov 2019
+* *3 hours* More work on data slicing with added functionality

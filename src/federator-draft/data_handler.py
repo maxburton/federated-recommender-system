@@ -49,6 +49,12 @@ class DataHandler:
             weaved_ds = np.vstack((weaved_ds, ds[i::num_of_partitions]))
         return weaved_ds
 
+    """
+    extracts entire entries into an np array with number of entries n
+    col determines which column to group entries e.g. movieId
+    lower and upper determine the random range in which entries are picked. The default is the first n entries
+    delete determines whether or not the entries should be deleted from self.dataset after extraction
+    """
     def extract_whole_entries(self, n, lower=1, upper=None, col=1, ds=None, delete=True):
         if ds is None:
             ds = self.dataset
@@ -60,6 +66,15 @@ class DataHandler:
             # negated boolean array "deletes" extracted rows by returning a new array without those rows
             self.dataset = ds[np.invert(np.isin(ds[:, col], movie_ids))]
         return extracted
+
+    """
+    extracts entire entries into 2 np arrays, one with number of IDs n1 and the other with number of IDs n2
+    col determines which column to group entries e.g. movieId
+    """
+    def extract_whole_entries_train_and_test(self, n1, n2, lower=1, upper=None, col=1, ds=None, delete=True):
+        train = self.extract_whole_entries(n1, lower=lower, upper=upper, col=col, ds=ds, delete=delete)
+        test = self.extract_whole_entries(n1+n2, lower=lower, upper=upper, col=col, ds=ds, delete=delete)
+        return train, test
 
     def split_dataset_randomly(self, num_of_partitions, ds=None):
         if ds is None:
@@ -89,8 +104,8 @@ class DataHandler:
                            (num_of_partitions, len(splits)))
             raise ex.InvalidRatioIndicesException
         splits = np.round(splits * len(ds)).astype(int)  # multiply each split float to its respective ds index
-        split_array = ds[:splits[0]]
-        for i in range(1, num_of_partitions):  # split dataset according to the splits ratios defined
+        split_array = []
+        for i in range(num_of_partitions):  # split dataset according to the splits ratios defined
             current_index = np.sum(splits[:i])
-            split_array = np.vstack((split_array, ds[current_index:(current_index + splits[i])]))
+            split_array.append(ds[current_index:(current_index + splits[i])])
         return split_array
