@@ -119,3 +119,4 @@
 
 ## 19 Nov 2019
 * *3 hours* More work on data slicing with added functionality
+* *4 hours* Implemented knn item-based collaborative filtering algorithm
