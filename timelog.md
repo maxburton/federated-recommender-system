@@ -120,3 +120,15 @@
 ## 19 Nov 2019
 * *3 hours* More work on data slicing with added functionality
 * *4 hours* Implemented knn item-based collaborative filtering algorithm
+
+## 21 Nov 2019
+* *5 hours* Fixing pivot method
+
+## 22 Nov 2019
+* *3 hours* Fixing pivot method
+* *4 hoours* Fixing sparse matrix not indexing correctly
+
+## Week 9
+
+## 25 Nov 2019
+* *2 hours" Fixed pivot method and tidied up code
