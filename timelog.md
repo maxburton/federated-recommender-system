@@ -131,4 +131,24 @@
 ## Week 9
 
 ## 25 Nov 2019
-* *2 hours" Fixed pivot method and tidied up code
+* *2 hours* Fixed pivot method and tidied up code
+
+## Week 10
+
+## 01 Dec 2019
+* *4 hours* Adding tests for knn
+
+## 04 Dec 2019
+
+* *1 hour* meeting with Nikos
+
+## Week 11
+
+## 13 Dec 2019
+* *2 hours* Adding tests for knn and researching other algorithms
+* *1 hour* researched user-item collaborative filtering technique
+
+## Week 12
+
+## 17 Dec 2019
+* *4 hours* Implemented first draft federator (working on knn on split datasets) and modified data_handler to handle new datasets

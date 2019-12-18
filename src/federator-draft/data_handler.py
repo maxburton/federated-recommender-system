@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import random as rand
 import logging
 import copy
@@ -11,14 +12,19 @@ class DataHandler:
 
     dataset = []
 
-    def __init__(self, filename=None, dtype=float, cols=1, ds=None):
+    def __init__(self, filename=None, dtype=float, cols=1, ds=None, first_row_names=True):
         if filename:
-            self.dataset = np.fromfile(filename, sep=" ", dtype=dtype)
-            dataset_items = len(self.dataset)
-            if dataset_items % cols != 0 or cols < 1:
-                self.log.error("Array cannot be reshaped to %d columns! Array items = %d" % (cols, dataset_items))
-                raise ex.InvalidShapeException
-            self.dataset = self.dataset.reshape(dataset_items//cols, cols)
+            if first_row_names:
+                self.dataset = pd.read_csv(filename, dtype={'userId': 'int32', 'movieId': 'int32', 'rating': 'float32',
+                                           'timestamp': 'uint32'}).get_values()
+            else:
+                self.dataset = np.fromfile(filename, sep=",", dtype=dtype)
+                dataset_items = len(self.dataset)
+                if dataset_items % cols != 0 or cols < 1:
+                    self.log.error("Array cannot be reshaped to %d columns! Array items = %d" % (cols, dataset_items))
+                    raise ex.InvalidShapeException
+                self.dataset = self.dataset.reshape(dataset_items // cols, cols)
+
         elif ds is not None:
             self.dataset = ds
         else:
