@@ -152,3 +152,6 @@
 
 ## 17 Dec 2019
 * *4 hours* Implemented first draft federator (working on knn on split datasets) and modified data_handler to handle new datasets
+
+## 18 Dec 2019
+* *1 hour* Meeting with Nikos

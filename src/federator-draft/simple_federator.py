@@ -29,7 +29,7 @@ class SimpleFederator:
         split_recommendations = self.knn_split_datasets(split_datasets, name, n, ds_base_path)
         federated_recommendations = self.federate_split_recommendations(split_recommendations, n)
         self.pretty_print_results(federated_recommendations, name)
-        self.log.info("Score: %.2f" % self.measure_effectiveness(federated_recommendations, n, golden_list, base_n))
+        self.log.info("Score: %.3f" % self.measure_effectiveness(federated_recommendations, n, golden_list, base_n))
 
     # TODO: put in a different helper file
     def knn_split_datasets(self, split_datasets, name, n, ds_base_path):
@@ -88,6 +88,6 @@ class SimpleFederator:
 if __name__ == '__main__':
     my_movie = "Pulp Fiction"
     n_neighbours = 20
-    base_n_neighbours = 100
+    base_n_neighbours = 200
 
     federator = SimpleFederator(my_movie, n_neighbours, base_n_neighbours)
