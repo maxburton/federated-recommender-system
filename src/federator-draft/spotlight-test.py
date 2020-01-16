@@ -1,3 +1,5 @@
+# Can't install spotlight for Python >3.6
+
 from spotlight.cross_validation import random_train_test_split
 from spotlight.datasets.movielens import get_movielens_dataset
 from spotlight.evaluation import mrr_score

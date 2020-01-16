@@ -1,8 +1,6 @@
 from lightfm import LightFM
 from lightfm.evaluation import precision_at_k
 from lightfm.evaluation import auc_score
-import numpy as np
-import logging
 import logging.config
 from lightfm.datasets import fetch_movielens
 import data_handler
