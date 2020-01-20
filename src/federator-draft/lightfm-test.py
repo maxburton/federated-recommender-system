@@ -8,10 +8,8 @@ from definitions import ROOT_DIR
 
 
 class LightFMAlg:
-    logging.config.fileConfig(ROOT_DIR + 'logging.conf', disable_existing_loggers=False)
+    logging.config.fileConfig(ROOT_DIR + '/logging.conf', disable_existing_loggers=False)
     log = logging.getLogger(__name__)
-    dataset = [1, 2, 3]
-    data_slicer = data_handler.DataSlicer(dataset)
 
     movielens = fetch_movielens()
 
@@ -34,3 +32,6 @@ class LightFMAlg:
 
     # Suggests that WARP is superior to BPR
 
+
+if __name__ == '__main__':
+    LightFMAlg()

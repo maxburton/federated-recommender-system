@@ -155,3 +155,27 @@
 
 ## 18 Dec 2019
 * *1 hour* Meeting with Nikos
+
+## Week 13
+
+## 23 Dec 2019
+* *2 hours* Fixed Spotlight example and implemented a simple spotlight knn algorithm
+
+## Week 14
+
+## 30 Dec 2019
+* *3 hours* Improved Spotlight alg and made it fit with existing data handling functions
+
+## Week 16
+
+## 17 Jan 2020
+* *3 hours* Implemented a basic LightFM algorithm with WARP model
+
+## 18 Jan 2020
+* *3 hours* Added a BPR model to the LightFM model
+
+## Week 17
+
+## 20 Jan 2020
+* *4 hours* Improved LightFM alg to make it fit with simple federator
+* *3 hours* Updated my knn alg to accomodate users by comparing all their ratings > 4.0 (or a certain threshold) and merging results

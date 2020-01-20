@@ -106,4 +106,4 @@ if __name__ == '__main__':
     my_movie = "Pulp Fiction"
 
     knn = KNearestNeighbours("/datasets/ml-latest-small")
-    knn.make_recommendation(my_movie, 20)
+    knn.make_recommendation(my_movie, 10, verbose=True)

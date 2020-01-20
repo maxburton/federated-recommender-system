@@ -3,6 +3,7 @@ import pandas as pd
 from definitions import ROOT_DIR
 import logging.config
 
+import helpers
 from data_handler import DataHandler
 from knn import KNearestNeighbours
 
@@ -28,7 +29,7 @@ class SimpleFederator:
         split_datasets = data.split_dataset_intermittently(num_of_alg_subsets)
         split_recommendations = self.knn_split_datasets(split_datasets, name, n, ds_base_path)
         federated_recommendations = self.federate_split_recommendations(split_recommendations, n)
-        self.pretty_print_results(federated_recommendations, name)
+        helpers.pretty_print_results(self.log, federated_recommendations, user_id)  # TODO: Make this work with knn-user instead
         self.log.info("Score: %.3f" % self.measure_effectiveness(federated_recommendations, n, golden_list, base_n))
 
     # TODO: put in a different helper file
@@ -61,11 +62,6 @@ class SimpleFederator:
                 entries += 1
             count += 1
         return federated_recommendations
-
-    def pretty_print_results(self, results, movie_name):
-        self.log.info('Federated Recommendations for {}:'.format(movie_name))
-        for row in results:
-            self.log.info('{0}: {1}, with distance of {2}'.format(row[0], row[1], row[2]))
 
     def measure_effectiveness(self, actual, actual_n, golden, golden_n):
         golden_dict = {}
