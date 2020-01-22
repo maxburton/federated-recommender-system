@@ -3,4 +3,5 @@
 
 -Find some "golden list" to compare my results to. e.g. based on a metric like rmse or WARP, OR comparing them to existing models in spotlight, lightfm and surprise
 -All algorithms need to output the same format e.g. a list of recommendations
-
+X-Make the lightfm alg also output a score per recommendation
+-Update lightfm algs (and future algs) to work with my input datasets

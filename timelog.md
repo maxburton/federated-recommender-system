@@ -182,4 +182,4 @@
 
 ## 22 Jan 2020
 * *4 hours* simple_federator now works with user ids
-* *1 hour* scores displayed for lightfm warp and bpr algs
+* *1 hour* scores returned for lightfm warp and bpr algs
