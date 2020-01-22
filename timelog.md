@@ -179,3 +179,7 @@
 ## 20 Jan 2020
 * *4 hours* Improved LightFM alg to make it fit with simple federator
 * *3 hours* Updated my knn alg to accomodate users by comparing all their ratings > 4.0 (or a certain threshold) and merging results
+
+## 22 Jan 2020
+* *4 hours* simple_federator now works with user ids
+* *1 hour* scores displayed for lightfm warp and bpr algs

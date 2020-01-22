@@ -15,7 +15,7 @@ class LightFMAlg:
 
     def __init__(self, loss_type, learning_rate=0.05, min_rating=4.0):
         data = fetch_movielens(min_rating=min_rating)   # Can remove min rating
-        self.log.warn(data)
+        #self.log.info(data)
         self.log.info(repr(data['train']))
         self.log.info(repr(data['test']))
 
@@ -26,16 +26,14 @@ class LightFMAlg:
         self.data = data
 
     @staticmethod
-    def print_recs(user_id, known, recs, num_known=3, num_rec=10):
-        print("User %s" % user_id)
-
-        print("User likes:")
+    def print_recs(user_id, known, recs, scores, num_known=5, num_rec=10):
+        print("User %s likes:"  % user_id)
         for i in range(num_known):
             print("%d: %s" % (i+1, known[i]))
 
         print("Recommendations:")
         for i in range(num_rec):
-            print("%d: %s" % (i+1, recs[i]))
+            print("%d: %s (score: %.5f)" % (i+1, recs[i], sorted(scores, reverse=True)[i]))
 
     def generate_rec(self, model, data, user_ids, num_rec=10):
         n_users, n_items = data["train"].shape
@@ -43,9 +41,12 @@ class LightFMAlg:
             known_positives = data["item_labels"][data["train"].tocsr()[user_id].indices]
             scores = model.predict(user_id, np.arange(n_items))
             top_items = data["item_labels"][np.argsort(-scores)]
-            self.print_recs(user_id, known_positives, top_items, num_rec=num_rec)
+            self.print_recs(user_id, known_positives, top_items, scores, num_rec=num_rec)
 
 
 if __name__ == "__main__":
-    alg = LightFMAlg("warp")  # warp or bpr
-    alg.generate_rec(alg.model, alg.data, [1], num_rec=20)
+    alg_bpr = LightFMAlg("bpr")  # warp or bpr
+    alg_bpr.generate_rec(alg_bpr.model, alg_bpr.data, [1], num_rec=20)
+
+    alg_warp = LightFMAlg("warp")  # warp or bpr
+    alg_warp.generate_rec(alg_warp.model, alg_warp.data, [1], num_rec=20)
