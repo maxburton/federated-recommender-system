@@ -37,15 +37,15 @@ class LightFMAlg:
         for i in range(num_rec):
             print("%d: %s" % (i+1, recs[i]))
 
-    def generate_rec(self, model, data, user_ids):
+    def generate_rec(self, model, data, user_ids, num_rec=10):
         n_users, n_items = data["train"].shape
         for user_id in user_ids:
             known_positives = data["item_labels"][data["train"].tocsr()[user_id].indices]
             scores = model.predict(user_id, np.arange(n_items))
             top_items = data["item_labels"][np.argsort(-scores)]
-            self.print_recs(user_id, known_positives, top_items)
+            self.print_recs(user_id, known_positives, top_items, num_rec=num_rec)
 
 
 if __name__ == "__main__":
     alg = LightFMAlg("warp")  # warp or bpr
-    alg.generate_rec(alg.model, alg.data, [1])
+    alg.generate_rec(alg.model, alg.data, [1], num_rec=20)

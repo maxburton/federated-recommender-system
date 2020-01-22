@@ -18,8 +18,8 @@ class KNearestNeighbours:
     movie_features = None
     movie_features_sparse = None
 
-    def __init__(self, ds_base_path, ds_ratings=None, p_thresh=50, u_thresh=50, m_filename="movies.csv",
-                 r_filename="ratings.csv"):
+    def __init__(self, ds_base_path="/datasets/ml-latest-small", ds_ratings=None, p_thresh=50, u_thresh=50,
+                 m_filename="movies.csv", r_filename="ratings.csv"):
         ds_path = ROOT_DIR + ds_base_path
         # read data
         self.df_movies = pd.read_csv(
@@ -62,9 +62,10 @@ class KNearestNeighbours:
         self.log.info('You have input movie: %s' % input_movie)
 
         # get the movie's ID and map it to the sparse matrix row index
-        idx = id2csr[fm.fuzzy_matching(t2id, input_movie)]
+        idx = id2csr[fm.fuzzy_matching(t2id, input_movie, verbose=verbose)]
 
-        self.log.info('KNN model predicting...')
+        if verbose:
+            self.log.info('KNN model predicting...')
         distances, indices = self.model_knn.kneighbors(self.movie_features_sparse[idx], n_neighbors=n_recommendations+1)
 
         raw_recommends = \

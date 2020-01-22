@@ -3,7 +3,7 @@ import logging.config
 from definitions import ROOT_DIR
 
 
-def fuzzy_matching(hashmap, fav_movie):
+def fuzzy_matching(hashmap, fav_movie, verbose=False):
     """
     return the closest match via fuzzy ratio.
     If no match found, return None
@@ -28,5 +28,6 @@ def fuzzy_matching(hashmap, fav_movie):
     if not match_tuple:
         log.info('Oops! No match is found')
     else:
-        log.info('Found possible matches in our database: {0}\n'.format([x[0] for x in match_tuple]))
+        if verbose:
+            log.info('Found possible matches in our database: {0}\n'.format([x[0] for x in match_tuple]))
         return match_tuple[0][1]
