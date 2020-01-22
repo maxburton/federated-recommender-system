@@ -4,6 +4,7 @@ from lightfm import LightFM
 from definitions import ROOT_DIR
 import logging.config
 from data_handler import DataHandler
+import helpers
 
 
 class LightFMAlg:
@@ -26,27 +27,30 @@ class LightFMAlg:
         self.data = data
 
     @staticmethod
-    def print_recs(user_id, known, recs, scores, num_known=5, num_rec=10):
+    def print_known(user_id, known, num_known=5):
         print("User %s likes:"  % user_id)
         for i in range(num_known):
             print("%d: %s" % (i+1, known[i]))
 
-        print("Recommendations:")
-        for i in range(num_rec):
-            print("%d: %s (score: %.5f)" % (i+1, recs[i], sorted(scores, reverse=True)[i]))
-
-    def generate_rec(self, model, data, user_ids, num_rec=10):
+    def generate_rec(self, model, data, user_id, num_known=5, num_rec=10):
         n_users, n_items = data["train"].shape
-        for user_id in user_ids:
-            known_positives = data["item_labels"][data["train"].tocsr()[user_id].indices]
-            scores = model.predict(user_id, np.arange(n_items))
-            top_items = data["item_labels"][np.argsort(-scores)]
-            self.print_recs(user_id, known_positives, top_items, scores, num_rec=num_rec)
+        #for user_id in user_ids:  # if i want to support multi user entry in the future
+        known_positives = data["item_labels"][data["train"].tocsr()[user_id].indices]
+        scores = model.predict(user_id, np.arange(n_items))
+        top_items = data["item_labels"][np.argsort(-scores)]
+        scores = scores[np.argsort(-scores)]
+
+        recs = []
+        for i in range(num_rec):
+            recs.append([i+1, top_items[i], scores[i]])
+        self.print_known(user_id, known_positives, num_known=num_known)
+        helpers.pretty_print_results(self.log, recs, user_id)
+        return recs
 
 
 if __name__ == "__main__":
     alg_bpr = LightFMAlg("bpr")  # warp or bpr
-    alg_bpr.generate_rec(alg_bpr.model, alg_bpr.data, [1], num_rec=20)
+    alg_bpr.generate_rec(alg_bpr.model, alg_bpr.data, 1, num_rec=20)
 
     alg_warp = LightFMAlg("warp")  # warp or bpr
-    alg_warp.generate_rec(alg_warp.model, alg_warp.data, [1], num_rec=20)
+    alg_warp.generate_rec(alg_warp.model, alg_warp.data, 1, num_rec=20)
