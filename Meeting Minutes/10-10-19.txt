@@ -1,0 +1,20 @@
+Use MAE and RMSE when you have pointwise loss functions (ie explicit feedback)
+but implicit neither are useful
+Other metrics: R2, Area under ROC
+Use whichever metric looks better, but still report all metrics
+Choose if we want to use implicit feedback too, seems like a good idea
+Ranking recommender algs
+Pointwise loss: like RMSE and MAE  
+Pairwise loss: check the order is right for two items for example, so it gives a relative ordering of which items rank best
+Pairwise loss functions: WARP, BPR
+Pairwise for implicit data as rankings are more meaningful than 0.05% probability for example
+Pairwise ranking metrics: MRR (Mean Recipricol Ranking)
+Metadata (e.g. user profile) not implicit or explicit data in the sense of RS, but instead can give genres weightings and hence recommend them more
+Embedding: numerical representation of something that's not numerical
+Can use this to compare user profiles
+Can also use embeddings for item profiles, to compare similar items
+Word2Vec: embeddings of all english words to vectors
+Item2Vec: Looks at col or row and squashes it into an embedding
+have to convert implicit/explicit to the opposite if 
+Decide if implicit or explicit is better, experiment with both
+Nikos will send me another email with reading about how to map different algorithms together so a federator can compare them and decide which is better

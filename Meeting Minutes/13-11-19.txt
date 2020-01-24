@@ -1,0 +1,3 @@
+Can use Richard's "voting model" but instead of using binary results, use a weighted list
+
+Read all of 2.8 in Richard's thesis

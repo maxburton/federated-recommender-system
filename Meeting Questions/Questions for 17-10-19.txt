@@ -1,0 +1,19 @@
+-Researched item2vec
+-experimented with light.fm and spotlight (implicit feedback)
+-Read about BPR(optimises for ROC AUC) and WARP(optimises for precision@k, benefits from early stop ~10 epochs, generally longer duration time than BPR until a max_runs hyperparameter is added, since it repeatedly tries to find a negative sample which becomes increasingly more difficult) and MMR loss functions
+-Read about precision@k (check if the desired item(s) are in the first k items in the recommendation list) and ROC AUC (check that any positive item is higher than a negative one) pairwise metrics
+-Researched mappings from one alg to another
+
+Questions:
+-Spotlight has compatibility issue with Python 3.7
+-Is me using my own metrics enough or should I look for a 3rd party to verify my results and findings
+-Idea: have real users interact with a prototype/finished model to see if any/how many recommendations they actually agree with
+-Through my own tests and online research, it seems that the WARP loss function usually outperforms the BPR function, should I still run with both? Don't want to have to report several metrics for each figure in my dissertation
+-Looking into the future: In the final/first draft prototype, should I include every algorithm/combination possible?
+
+To Do:
+-Continue researching how to map different algs together
+-Deeper experiments with light.fm
+-look into ethics approval
+-Look at papers that use ranked retrieval metrics
+-Look into how to get the 'golden' list for ranked retrieval or other metrics (ie the most correct list) (use methods already used by a published paper)

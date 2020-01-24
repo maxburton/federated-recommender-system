@@ -1,0 +1,18 @@
+What I've Done:
+-Started practicing with SurPRISE with the movielens dataset
+-Specifically the SVD algorithm, seeing the MAE and RMSE, which are cross-validated using a fold system
+-Read the chapters emailed to me
+
+Questions:
+-MAE or RMSE, or both?
+-Is comparing the RMSE of one algorithm enough (to begin with) to choose which model should be selected? (in the case of the very simple, "choosing" federated system)
+-What further metrics/comparisons would be useful for a more refined choosing process?
+-Clarifications about diagram drawn last meeting: Is this what the final system is expected to look like?
+-Regarding the user profiles, should they be manually inputted by real humans or simulated?
+-What kind of learning can we apply on the database of user profiles (metadata)
+-Difference between training set and test set?
+-Why use multiple folds when training?
+
+What to do next:
+-Practice with other algorithms in surprise, and also the other libraries (light.fm and spotlight)
+-Start experimenting with how to federate these algorithms (starting with a single dataset split into even chunks with the same svd alg, and comparing those)

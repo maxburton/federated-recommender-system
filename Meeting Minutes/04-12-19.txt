@@ -1,0 +1,4 @@
+knn regression- find most similar users and use regression to predict the best movies
+check out spotlight again for inspiration
+create algorithms based on user input instead of movie inputs
+then look into federating with only one algorithm but with sub-splits of the dataset (use the full dataset as a baseline)

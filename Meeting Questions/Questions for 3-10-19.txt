@@ -1,0 +1,19 @@
+What I've Done:
+-Created git repo with kanban board, issues and template files
+-Collated a list of useful datasets
+-Set up latex to build locally
+-Tried a few Python recommender algorithms
+
+Questions:
+-Is this considered a Research-style project or a Software-Engineering-style project
+-When would the dissertation need to be ready by to be available for publication consideration
+-I've looked at a few existing Python libraries with various recommender algorithms. Question which algorithms make the most sense to use.
+-The springer reading you sent me seems to no longer be accessible
+-Since I couldn't read about those, how would I go about federating recommender algorithms?
+-Ask about the queries part of the example system architecture on the slides
+-Clarify the meaning of the stages in the rough time schedule on the slides
+X-Github repo is private, shall I add you to it?
+
+What to do next:
+-Start trying the Python recommender algs with the datasets found
+-Think about a way to federate these algs

@@ -1,0 +1,7 @@
+Change extracting whole movies to extracting whole users
+how to pick extracting users: try both random and only pick users with >5 ratings for example
+calculate golden list from whole dataset, feed whole dataset into an algorithm. To evaluate the federator, generate recommendation for one queried user profile, then feed it into the algorithm that calculates golden list and compare.
+can try run the same algorithm on each backend system
+
+next steps: read Richard's thesis (in old emails), mentions ranking from different recommenders, try to produce non SVD algs
+for now, dont need to map, we can just merge all the results and pick the results with the highest scores determined by each alg

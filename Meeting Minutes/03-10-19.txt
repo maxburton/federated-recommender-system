@@ -1,0 +1,26 @@
+Minutes
+
+Use overleaf for latex
+Nikos will email me existing, useful Python "frameworks", e.g. Surprise, lightfm
+Spotlight with pytorch
+Spotlight is implicit focused, Surprise is all around
+Explicit data - e.g. scores, ratings
+Implicit data - clicks, purchases, etc, usually binary
+explicit data can be transformed into implicit, e.g. rating 0-4 is a 0, 5-10 is a 1
+Discussion about implicit data being only binary? Could be useful to have it be a range, e.g. buying one item on amazon several times is better than just once
+LightFM, Spotlight have methods that incorporate metadata that can be considered, e.g. tags
+Start with surprise, but give the others a try as well
+Matrix Factorisation - start with this algorithm as it's the simplest to understand (especially SVD based, or stochastic greadient descent)
+Many of the algorithms implement neural networks, very hard to understand
+Not the goal of the project to understand and be an expert in all these algorithms, but should have a high level understanding
+
+Example system architecture slide:
+Queries section: With several backend RS models built from different parts of a dataset and with different algorithms, pick one or many of them, and figure out a way to 
+combine them. There's an issue: the scaling may not match between models, this is the main challenge, figuring out how to combine them in a meaningful way
+Potentially ignore users that dont have ratings
+Partition dataset into a test piece, a training piece, and several others for backend RS engines
+Two approaches: split the users and their ratings in the existing order, or first convert it to matrix then split.
+Since some items might not be in all the backend engines, gotta figure out how to filter them
+Do the new reading sent in email
+federated readings may not be too relevant but good food for thought
+For now do more reading

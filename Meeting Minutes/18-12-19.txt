@@ -1,0 +1,12 @@
+preprocess data: normalise ratings: subtract mean from every rating and divide rating for each user (for example)
+try gridsearch and other methods to find optimal thresholds (ranking metrics e.g. normalised discounted cumulative gain (implement it myself to use with scikit))
+(can also use NDCG to score my federator againsta a golden list) aka update my scoring method
+or can also try MAP@K or MAR@K (easier but less fancy)
+research: kmeans vigilance threshold, could be used as part of knn to improve performance (adaptive resonance theory)
+don't worry about generating a full list of rankings, just generate the same number of golden list entries as federated entries
+when getting recommendations for several movies in a user's ratings: sort everything and compute top n items
+Some movies can be missing from the splits, same for golden list IF we use same metric in the gridsearch as the knn scoring metric
+We can say: our result is the optimal achieved when we don't have federation
+Use new metric NDCG on all KNN scorings
+
+Once again: check SURPRISE if any of these algs already exist

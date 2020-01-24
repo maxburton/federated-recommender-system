@@ -1,0 +1,13 @@
+- Implemented k nearest neighbours algorithm
+- Added fuzzymatching
+- Added more functionality to data slicing
+
+- Collaborative or content based filtering? I think we should focus on collaborative
+- What's the difference between content-based filtering and item-based collaborative filtering?
+- ValueError: Unstacked DataFrame is too big, causing int32 overflow pandas >0.21, doesnt work with ml-20m
+- hence thinking of using pure np and not pandas
+
+Next steps:
+- Implement Alternating Least Square (ALS) Matrix Factorization in Collaborative Filtering
+- Merge the results of those into one combined list
+- Convert existing code from pandas to np

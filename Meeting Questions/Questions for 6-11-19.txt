@@ -1,0 +1,8 @@
+What I've Done:
+- set up testing and logging environments
+- created methods to split the dataset, including ratio splitting of any size
+- created sorting methods, including intermittent and random
+- couldn't find much info about golden lists
+
+Questions:
+- Is it possible to concatenate 2d arrays that have different row count? (but same col count)

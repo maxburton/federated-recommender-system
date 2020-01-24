@@ -1,0 +1,13 @@
+Can train on both slices or everything
+Start with simply matching movie ids, assume they are the same
+then we can create embeddings (vectors) for each movie if we have time
+can do the split method I mentioned, or split movies into groups, try both
+Split whole dataset into a test and training set thats used FOR THE FEDERATOR, as well as n number of datasets for each algorithm to use. The algorithm then splits their respective datasets into a training and test set for them to train with.
+For the federator, extract entire users from dataset first to have whole user profiles, then split dataset afterwards however we want
+Golden lists
+Next meeting, discuss design of federator
+
+TODO: 
+- before splitting into the datasets for the federator, remove some movies entirely to populate federator test and training sets with complete movies
+- split movielens dataset with my method
+- research about golden lists

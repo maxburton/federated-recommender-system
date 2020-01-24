@@ -1,0 +1,4 @@
+Item based and user based take the same input (user-item row) but item based computes all users that an item would recommend
+
+NOTE: changed num_cells = np.multiply(num_rows, num_columns, dtype=np.int32) to num_cells = np.multiply(num_rows, num_columns, dtype=np.int64) in pandas/core/reshape/reshape.py to fix pivot only being able to handle up to 4B cells (we use more for ml-20m for example)
+and mask = np.zeros(np.prod(self.full_shape), dtype=bool) to mask = np.zeros(np.prod(self.full_shape, dtype=np.int64), dtype=bool)

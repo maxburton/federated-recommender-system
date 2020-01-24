@@ -1,0 +1,21 @@
+discussed spotlight not working on python 3.7, nikos sent me an email with a fix for that
+Install Cuda, works even without nvidia, needed for pytorch and hence spotlight
+BPR is possibly better, but WARP usually wins, so may as well report both for more results
+In the background section have a paragraph for BPR and WARP, and then don't discuss it again until the performance review
+Look at MRR mean recipricol rank, common
+Use the existing metrics, don't need to implement them yourself
+Offline vs online evaluation, offline easiest and cheapest
+Online would involve ethics
+A/B testing: but create a list of recs where items from system A and B are weaved intermittedely, and the order of whether A or B is first in the list is randomly mixed.
+Can post it online, and then we don't ethics approval
+e.g. reddit, but need a disclaimer that user accepts ie gdpr
+Start looking at ethics approval, and figure out what kind of questions will be asked
+Dont use every algorithm
+Use the best algorithm for each 'slice' of the dataset
+write a script that tries many different algorithms and tweaks parameters to find the best alg for each slice
+specify set of hyper parameters, then exhaustively tweak each one one at a time
+grid search cross validation
+some metrics might not work for some algs, but all need to be the same in the end
+Explain why i picked each algorithm
+One engine per data slice
+See if it's possible to integrate many different movie databases together

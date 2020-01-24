@@ -1,0 +1,10 @@
+-Won't need ethics approval as I will focus on offline evaluation, maybe put it on the internet for anonymous evaluations
+
+Questions:
+-Something fundamental I want to clarify: Should I train each backend algorithm using all available data? or only train it on subsets. If only on slices, why only on each slice?
+-Should I use movielens' built in cross-validation sets? They have 5 training/testing sets split 80%/20%
+-What technique for splitting the dataset? I'm thinking ordering by item, then creating subsets round robin style (if there are 5 groups, add item one to group 1, item two to group 2, etc). This almost guarantees that groups will have some shared data, and that the groups will be as evenly distributed as possible.
+-When slicing, do the chunks/slices need to be exactly the same size or can they be +- a few?
+
+To Do:
+-Order and split dataset

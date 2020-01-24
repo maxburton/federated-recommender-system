@@ -1,0 +1,4 @@
+- Read the "2.7 Aggregate Ranking" chapter in Richard's thesis, is this the relevant chapter?
+- No mention of how to map between engines/documents
+- Focuses on "documents", would this be relevant to this project?
+- The thesis uses the "voting model" which seems to take the results of an engine as a binary result, either yes or no

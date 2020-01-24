@@ -1,0 +1,7 @@
+Questions:
+
+Should I iterate through each user's liked movies (e.g. they rated 4-5 stars) and compile a KNN recommendation list based on that, or measure similarity of profiles THEN recommend based on user similarity
+Increasing the threshold of when to cut off movies based on low ratings/inactive users improves distances in KNN, is this a useful metric to measure effectiveness?
+Does increasing the number of neighbours affect performance? (I want to generate a full list of all the movies ranked in order to measure my federator by using it as a golden list)
+Does using the non-split dataset as a golden list make sense to judge performance of my federator?
+Any advice for making my federator more effective?
