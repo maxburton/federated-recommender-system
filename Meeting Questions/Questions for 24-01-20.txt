@@ -1,0 +1,2 @@
+-How to scale rankings of different metrics so they can be compared
+-Other methods of federating? rather than simply comparings scores
