@@ -1,0 +1,2 @@
+Regarding my KNN alg: to make it work with user input and not movie input, I simply merge scores from all movies with score >4.0, is this good enough or should I use a different alg?
+LightFM alg sometimes recommends movies that the user has already rated, how important is this? Can i ignore it? In my knn alg I explicitly remove such entries, do the same for lightfm?

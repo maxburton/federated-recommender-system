@@ -10,7 +10,7 @@ from knn_user import KNNUser
 DS_PATH = ROOT_DIR + "/datasets/ml-latest-small"
 
 
-class SimpleFederator:
+class SimpleKNNFederator:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class SimpleFederator:
         split_datasets = data.split_dataset_intermittently(num_of_alg_subsets)
         split_recommendations = self.knn_split_datasets(split_datasets, user_id, num_of_recs)
         federated_recommendations = self.federate_split_recommendations(split_recommendations, n)
-        helpers.pretty_print_results(self.log, federated_recommendations, user_id)  # TODO: Make this work with knn-user instead
+        helpers.pretty_print_results(self.log, federated_recommendations, user_id)
         self.log.info("Score: %.3f" % self.measure_effectiveness(federated_recommendations, n, golden_list, base_n))
 
     # TODO: put in a different helper file
@@ -80,10 +80,10 @@ class SimpleFederator:
         return score
 
 
-# Test with Pulp Fiction
+# Test with user 1
 if __name__ == '__main__':
     user_id = 1
     n_neighbours = 20
     base_n_neighbours = 200
 
-    federator = SimpleFederator(user_id, n_neighbours, base_n_neighbours)
+    federator = SimpleKNNFederator(user_id, n_neighbours, base_n_neighbours)

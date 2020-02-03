@@ -1,11 +1,19 @@
 first try a linear normalisation (find the scaling factor for each)
 use a learning function to normalise/create a mapping between algs
 running on one split, the model should be generalisable to any other splits
-may need to change the splitting method: 
+may need to change the splitting method: (but we'll just use ours as is)
 Have a holdout split to test the normaliser
 report both golden lists (if there are 2 algs) against the fedarated lists
 golden list should be one alg on 1 split (representing a provider eg netflix or disney) and federated runs on several split
 ndcg@k number (usually 5 or 10) can try 100 (aka larger k) (use both shallow and deep) (but primarily use shallow k)
 precision recall and map are other possible metrics
 For normaliser first try: simply try to map score one to score two, and more complicated can include one hot encoding for tags, genres etc.
-First generate golden list from both algs on the whole dataset (so there are 2 golden lists) then run the algs on individual splits (to generate 2 more lists) and finally a federated list. Then compare all 3 with the golden lists
+First generate golden list from both algs on the whole dataset (so there are 2 golden lists) then run the algs on individual splits (to generate 2xnum_of_splits more lists) and finally a federated list. Then compare all 3 with the golden lists
+
+TODO: 
+X-Create class that generates a golden list for each alg from all available data
+-Create new splitting method that has some movie and user overlap in splits (instead of all unique to split)
+-Create 2 classes that runs both algs on every individual split and calculates their scores against the golden lists
+-Create class that federates data from both algs, maps their scores and generates a new list. Compare this list with both golden lists
+
+(Simple federator can be improved, right now it splits the dataset and computes scores on splits, then merges them. Add functionality to compare this list with the golden knn list)

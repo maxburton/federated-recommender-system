@@ -183,3 +183,19 @@
 ## 22 Jan 2020
 * *4 hours* simple_federator now works with user ids
 * *1 hour* scores returned for lightfm warp and bpr algs
+
+## 24 Jan 2020
+* *1 hour* Meeting with Nikos and Richard, discusses next steps and how to map scores from different algs
+
+## 26 Jan 2020
+* *3 hours* Created class that handles golden lists from algs
+* *1 hour* Created basic federator class to house all important variables
+
+## Week 18
+
+## 29 Jan 2020
+* *5 hours* continued work on basic federator class, and started work on a simple score mapper
+
+## Week 19
+
+## 3 Feb 2020
