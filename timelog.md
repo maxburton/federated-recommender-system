@@ -199,3 +199,5 @@
 ## Week 19
 
 ## 3 Feb 2020
+* *2 hours* implemented running algs on individual splits and comparing that to golden lists (knn) (e.g. imagine them as movie providers netflix, amazon, etc) (next step: see if federating these provides better scores)
+* *1 hour* ditto with lfm (started)

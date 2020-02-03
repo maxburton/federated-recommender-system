@@ -1,2 +1,3 @@
 Regarding my KNN alg: to make it work with user input and not movie input, I simply merge scores from all movies with score >4.0, is this good enough or should I use a different alg?
 LightFM alg sometimes recommends movies that the user has already rated, how important is this? Can i ignore it? In my knn alg I explicitly remove such entries, do the same for lightfm?
+For ndcg@k : I am simply assuming that if a movie exists in the rec list and the golden list then it gets a score of 1, else 0, is this good enough for our test case? Or should I assign more range? e.g. 3 = very relevant 1 = somewhat relevant 0 = not relevant

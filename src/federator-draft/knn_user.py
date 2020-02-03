@@ -47,7 +47,7 @@ class KNNUser:
                 rec_i += 1
             current_i += 1
         helpers.pretty_print_results(self.log, final_recs, self.user_id)
-        return final_recs
+        return np.array(final_recs)
 
 
 if __name__ == '__main__':

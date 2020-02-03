@@ -12,8 +12,10 @@ First generate golden list from both algs on the whole dataset (so there are 2 g
 
 TODO: 
 X-Create class that generates a golden list for each alg from all available data
--Create new splitting method that has some movie and user overlap in splits (instead of all unique to split)
+-(optional) Create new splitting method that has some movie and user overlap in splits (instead of all unique to split)
 -Create 2 classes that runs both algs on every individual split and calculates their scores against the golden lists
 -Create class that federates data from both algs, maps their scores and generates a new list. Compare this list with both golden lists
+-XFIGURE OUT NDCG! What are relevance values? How do I calculate them?X
+-Have lfm alg work with split datasets
 
 (Simple federator can be improved, right now it splits the dataset and computes scores on splits, then merges them. Add functionality to compare this list with the golden knn list)

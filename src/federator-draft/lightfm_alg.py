@@ -15,6 +15,7 @@ class LightFMAlg:
     data = None
 
     def __init__(self, loss_type, learning_rate=0.05, min_rating=4.0):
+        # TODO: make this work with an external dataset
         data = fetch_movielens(min_rating=min_rating)   # Can remove min rating
         #self.log.info(data)
         self.log.info(repr(data['train']))
@@ -34,7 +35,7 @@ class LightFMAlg:
 
     def generate_rec(self, model, data, user_id, num_known=5, num_rec=10):
         n_users, n_items = data["train"].shape
-        #for user_id in user_ids:  # if i want to support multi user entry in the future
+        # for user_id in user_ids:  # if i want to support multi user entry in the future
         known_positives = data["item_labels"][data["train"].tocsr()[user_id].indices]
         scores = model.predict(user_id, np.arange(n_items))
         top_items = data["item_labels"][np.argsort(-scores)]
@@ -45,7 +46,7 @@ class LightFMAlg:
             recs.append([i+1, top_items[i], scores[i]])
         self.print_known(user_id, known_positives, num_known=num_known)
         helpers.pretty_print_results(self.log, recs, user_id)
-        return recs
+        return np.array(recs)
 
 
 if __name__ == "__main__":
