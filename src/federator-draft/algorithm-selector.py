@@ -23,7 +23,7 @@ class AlgorithmSelector:
         num_of_alg_subsets = 5
         algorithm_unsplit_dataset = data.split_dataset_intermittently(num_of_alg_subsets)
         for i in range(num_of_alg_subsets):
-            alg_subset = data.split_dataset_by_ratio(2, [0.8, 0.2], ds=algorithm_unsplit_dataset[i])
+            alg_subset = data.split_dataset_by_ratio([0.8, 0.2], ds=algorithm_unsplit_dataset[i])
             self.log.info("Algorithm %d dataset shapes: train: %s, test: %s" % (i, alg_subset[0].shape,
                                                                                 alg_subset[1].shape))
             self.algorithm_datasets.append(alg_subset)

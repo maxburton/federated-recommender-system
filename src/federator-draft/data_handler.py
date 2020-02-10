@@ -99,7 +99,8 @@ class DataHandler:
             ds = self.dataset
         return np.array_split(ds, num_of_partitions)
 
-    def split_dataset_by_ratio(self, num_of_partitions, splits, ds=None):
+    def split_dataset_by_ratio(self, splits, ds=None):
+        num_of_partitions = len(splits)
         splits = np.array(splits)
         if ds is None:
             ds = self.dataset

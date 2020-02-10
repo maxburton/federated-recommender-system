@@ -143,16 +143,16 @@ class TestDataHandler(unittest.TestCase):
 
     def test_ratio_split(self):
         data = DataHandler(filename=self.ML100K_PATH, dtype=np.uint32, cols=4)
-        split_array = data.split_dataset_by_ratio(2, [0.8, 0.2])
+        split_array = data.split_dataset_by_ratio([0.8, 0.2])
         self.assertTrue(self.__sum_len_of_list(split_array) == len(data.get_dataset()))
-        split_array = data.split_dataset_by_ratio(3, [0.123456789, 0.376543211, 0.5])
+        split_array = data.split_dataset_by_ratio([0.123456789, 0.376543211, 0.5])
         self.assertTrue(self.__sum_len_of_list(split_array) == len(data.get_dataset()))
 
-        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, 2, [0.1, 0.89])
-        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, 2, [0.1, 0.91])
+        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, [0.1, 0.89])
+        self.assertRaises(ex.InvalidRatioSumException, data.split_dataset_by_ratio, [0.1, 0.91])
 
-        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, 3, [0.1, 0.9])
-        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, 1, [0.1, 0.9])
+        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, [0.1, 0.9])
+        self.assertRaises(ex.InvalidRatioIndicesException, data.split_dataset_by_ratio, [0.1, 0.9])
 
 
 if __name__ == '__main__':

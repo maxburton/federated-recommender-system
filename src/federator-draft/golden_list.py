@@ -23,7 +23,7 @@ class GoldenList:
         lfm_metric = "warp"  # warp or bpr
         self.log.info("LFM (%s) Golden List:" % lfm_metric)
         lfm_model = LightFMAlg(lfm_metric)
-        golden_lfm = lfm_model.generate_rec(lfm_model.model, lfm_model.data, 1, num_rec=20)
+        golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=20)
 
         return golden_knn, golden_lfm
 

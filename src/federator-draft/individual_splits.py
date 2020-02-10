@@ -43,9 +43,8 @@ class IndividualSplits:
     def run_on_splits_lfm(self, user_id, golden, num_of_recs=20):
         scores = []
         for i in range(len(self.split_dataset)):
-            knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, self.split_dataset[i]),
-                           p_thresh=0, u_thresh=0)
-            split_recs = knnu.make_recommendation(num_of_recs=num_of_recs)
+            alg_warp = LightFMAlg("warp", ds=self.split_dataset[i])  # warp or bpr
+            split_recs = alg_warp.generate_rec(alg_warp.model, user_id-1, num_rec=num_of_recs)  # lfm is zero indexed
             r_values = helpers.get_relevant_values(split_recs, golden)
             k = 10  # (NDCG@k)
             scores.append(helpers.ndcg_at_k(r_values, k))
@@ -55,5 +54,7 @@ class IndividualSplits:
 if __name__ == '__main__':
     user_id = 1
     golden_knn, golden_lfm = GoldenList().generate_lists(user_id, num_of_recs=100)
-    scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn)
-    print(scores)
+    #knn_scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn)
+    lfm_scores = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm)
+    #print("KNN: %s" % str(knn_scores))
+    print("LFM: %s" % str(lfm_scores))

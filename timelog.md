@@ -201,3 +201,12 @@
 ## 3 Feb 2020
 * *2 hours* implemented running algs on individual splits and comparing that to golden lists (knn) (e.g. imagine them as movie providers netflix, amazon, etc) (next step: see if federating these provides better scores)
 * *1 hour* ditto with lfm (started)
+
+## 6 Feb 2020
+* *2 hours* continued work on lfm, progressing on making lfm work with non standard datasets (e.g. slices)
+
+## 8 Feb 2020
+* *1 hour* continued debugging lfm to work with splits
+
+## 9 Feb 2020
+* *6 hours* lfm now works on splits, completed individual splits class

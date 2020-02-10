@@ -1,4 +1,8 @@
+import itertools
+
 import numpy as np
+import scipy.sparse as sp
+from lightfm.data import Dataset
 
 
 def pretty_print_results(log, results, user_id):
@@ -24,6 +28,61 @@ def get_relevant_values(recs, golden):
             r_value = 1 + 2/((len(golden_movie_names)/2) + distance/len(golden_movie_names)/2)
         relevant_values.append(r_value)
     return relevant_values
+
+
+def lfm_data_mapper(ds):
+    dataset = Dataset()
+    users = ds["userId"].to_numpy()
+    movies = ds["movieId"].to_numpy()
+    dataset.fit(users, movies)
+    (interactions, weights) = dataset.build_interactions(zip(users, movies))
+    print(repr(interactions))
+    return interactions
+
+
+def parse(data):
+
+    for line in data:
+
+        uid, iid, rating, timestamp = [int(x) for x in line]
+
+        # Subtract one from ids to shift
+        # to zero-based indexing
+        yield uid - 1, iid - 1, rating, timestamp
+
+
+def get_dimensions(train_data, test_data):
+
+    uids = set()
+    iids = set()
+
+    for uid, iid, _, _ in itertools.chain(train_data,
+                                          test_data):
+        uids.add(uid)
+        iids.add(iid)
+
+    rows = len(uids)
+    cols = len(iids)
+
+    return rows, cols, np.array(sorted(list(uids))), np.array(sorted(list(iids)))
+
+
+def build_interaction_matrix(rows, cols, data, min_rating, item_mapper, user_mapper):
+
+    mat = sp.lil_matrix((rows, cols), dtype=np.int32)
+
+    for uid, iid, rating, _ in data:
+        if rating >= min_rating:
+            mat[user_mapper[uid], item_mapper[iid]] = rating  # mappers required as some users/items might not exist
+
+    return mat.tocoo()
+
+
+def generate_mapper(lst):
+    mapper = {k: v for k, v in enumerate(lst)}
+    inverted_mapper = {v: k for k, v in mapper.items()}
+
+    return inverted_mapper
 
 
 """
