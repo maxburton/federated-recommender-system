@@ -6,6 +6,7 @@ install pandas on conda
 install pytorch on conda
 install h5py on conda
 install scikit-learn on conda
+install matplotlib on conda
 conda install -c conda-forge fuzzywuzzy
 conda install -c conda-forge scikit-surprise
 conda install -c conda-forge lightfm

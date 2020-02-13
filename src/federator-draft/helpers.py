@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import scipy.sparse as sp
 from lightfm.data import Dataset
+import matplotlib.pyplot as plt
 
 
 def pretty_print_results(log, results, user_id):
@@ -83,6 +84,18 @@ def generate_mapper(lst):
     inverted_mapper = {v: k for k, v in mapper.items()}
 
     return inverted_mapper
+
+
+def create_scatter_graph(labels, colors, *args, ymin=0, ymax=1):
+    x = np.linspace(0, len(args[0]), len(args[0]))
+    for i in range(len(args)):
+        plt.scatter(x, args[i], s=2, c=colors[i], label=labels[i], alpha=0.3)
+    plt.axis('equal')
+    plt.legend()
+    # plt.autoscale(False, tight=True)
+    plt.axis([0, len(args[0]), ymin, ymax])  # TODO: Figure out why y axis won't scale
+    plt.tight_layout()
+    plt.show()
 
 
 """

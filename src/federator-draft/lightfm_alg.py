@@ -53,6 +53,9 @@ class LightFMAlg:
         scores = scores[np.argsort(-scores)]
 
         recs = []
+        if num_rec == -1:
+            num_rec = len(top_items)
+
         for i in range(num_rec):
             recs.append([i+1, top_items[i], scores[i]])
         self.print_known(user_id, known_positives, num_known=num_known)

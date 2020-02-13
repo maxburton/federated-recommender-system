@@ -210,3 +210,8 @@
 
 ## 9 Feb 2020
 * *6 hours* lfm now works on splits, completed individual splits class
+
+## Week 20
+
+## 12 Feb 2020
+* *3 hours* added basic alg mapper, that normalises, sorts and trims data from a split in knn and lfm.

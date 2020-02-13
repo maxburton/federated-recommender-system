@@ -26,28 +26,42 @@ class KNNUser:
         self.liked_movies = liked_movies.to_numpy()
         self.user_id = user_id
 
-    def make_recommendation(self, num_of_recs, verbose=False):
+        self.final_recs_names = []
+        self.final_recs = []
+        self.rec_i = 0
+        self.current_i = 0
+        self.ordered_recs = []
+
+    def make_recommendation(self, num_of_recs, n_recommendations=100, min_score=0.01, verbose=False):
         unordered_recs = []
         for movie in self.liked_movies:
-            sub_results = self.knn.make_recommendation(movie, n_recommendations=100, verbose=verbose)
+            sub_results = self.knn.make_recommendation(movie, n_recommendations=n_recommendations, verbose=verbose)
             for rec in sub_results:
                 unordered_recs.append(rec)
         unordered_recs = np.array(unordered_recs)
-        ordered_recs = unordered_recs[unordered_recs[:, 2].argsort()]  # sort the array by distance
+        self.ordered_recs = unordered_recs[unordered_recs[:, 2].argsort()]  # sort the array by distance
 
-        final_recs_names = []
-        final_recs = []
-        rec_i = 0
-        current_i = 0
-        while rec_i < num_of_recs:
-            _, movie_title, score = ordered_recs[current_i]
-            if movie_title not in final_recs_names and movie_title not in self.liked_movies and float(score) >= 0.01:
-                final_recs_names.append(movie_title)
-                final_recs.append([rec_i + 1, movie_title, score])
-                rec_i += 1
-            current_i += 1
-        helpers.pretty_print_results(self.log, final_recs, self.user_id)
-        return np.array(final_recs)
+        if num_of_recs == -1:
+            while True:
+                try:
+                    self.get_next_rec(min_score)
+                except IndexError:
+                    self.log.info("Maximum recs reached! Aborting loop")
+                    break
+        else:
+            while self.rec_i < num_of_recs:
+                self.get_next_rec(min_score)
+        helpers.pretty_print_results(self.log, self.final_recs, self.user_id)
+        return np.array(self.final_recs)
+
+    def get_next_rec(self, min_score):
+        _, movie_title, score = self.ordered_recs[self.current_i]
+        if movie_title not in self.final_recs_names and \
+                movie_title not in self.liked_movies and float(score) >= min_score:
+            self.final_recs_names.append(movie_title)
+            self.final_recs.append([self.rec_i + 1, movie_title, score])
+            self.rec_i += 1
+        self.current_i += 1
 
 
 if __name__ == '__main__':
