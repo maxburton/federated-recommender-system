@@ -214,4 +214,12 @@
 ## Week 20
 
 ## 12 Feb 2020
-* *3 hours* added basic alg mapper, that normalises, sorts and trims data from a split in knn and lfm.
+* *4 hours* added basic alg mapper, that normalises, sorts and trims data from a split in knn and lfm.
+
+## 13 Feb 2020
+* *1 hours* meeting with Nikos
+
+## Week 21
+
+## 18 Feb 2020
+* *4 hours* Implemented surprise svd alg

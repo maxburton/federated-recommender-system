@@ -10,6 +10,7 @@ class Federator:
 
     def __init__(self):
         user_id = 1
-        golden_knn, golden_lfm = GoldenList().generate_lists(user_id)
+        golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(user_id)
         split_scores_knn = IndividualSplits().run_on_splits_knn(user_id, golden_knn)
         split_scores_lfm = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm)
+        split_scores_svd = IndividualSplits().run_on_splits_svd(user_id, golden_svd)

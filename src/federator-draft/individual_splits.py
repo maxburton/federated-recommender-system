@@ -7,6 +7,7 @@ from data_handler import DataHandler
 from golden_list import GoldenList
 from knn_user import KNNUser
 from lightfm_alg import LightFMAlg
+from surprise_svd import SurpriseSVD
 
 """
 Runs each alg on individual splits, then calculates their score against their respective golden list
@@ -50,11 +51,23 @@ class IndividualSplits:
             scores.append(helpers.ndcg_at_k(r_values, k))
         return scores
 
+    def run_on_splits_svd(self, user_id, golden, num_of_recs=20):
+        scores = []
+        for i in range(len(self.split_dataset)):
+            svd = SurpriseSVD(ds=self.split_dataset[i])
+            split_recs = svd.get_top_n(user_id, n=num_of_recs)
+            r_values = helpers.get_relevant_values(split_recs, golden)
+            k = 10  # (NDCG@k)
+            scores.append(helpers.ndcg_at_k(r_values, k))
+        return scores
+
 
 if __name__ == '__main__':
     user_id = 1
-    golden_knn, golden_lfm = GoldenList().generate_lists(user_id, num_of_recs=100)
+    golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(user_id, num_of_recs=100)
     #knn_scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn)
     lfm_scores = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm)
+    svd_scores = IndividualSplits().run_on_splits_svd(user_id, golden_svd)
     #print("KNN: %s" % str(knn_scores))
     print("LFM: %s" % str(lfm_scores))
+    print("SVD: %s" % str(svd_scores))

@@ -2,6 +2,7 @@ from definitions import ROOT_DIR
 import logging.config
 from knn_user import KNNUser
 from lightfm_alg import LightFMAlg
+from surprise_svd import SurpriseSVD
 
 """
 Creates a "golden list" that will be the standard for future lists. Runs on both my custom KNN user-input alg and
@@ -25,7 +26,11 @@ class GoldenList:
         lfm_model = LightFMAlg(lfm_metric)
         golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=20)
 
-        return golden_knn, golden_lfm
+        self.log.info("SVD Golden List:")
+        svd = SurpriseSVD()
+        golden_svd = svd.get_top_n(user_id, n=20)
+
+        return golden_knn, golden_lfm, golden_svd
 
 
 if __name__ == '__main__':

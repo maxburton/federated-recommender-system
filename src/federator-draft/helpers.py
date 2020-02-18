@@ -91,8 +91,10 @@ def create_scatter_graph(labels, colors, *args, ymin=0, ymax=1):
     for i in range(len(args)):
         plt.scatter(x, args[i], s=2, c=colors[i], label=labels[i], alpha=0.3)
     plt.legend()
-    # plt.autoscale(False, tight=True)
-    plt.axis([0, len(args[0]), ymin, ymax])  # TODO: Figure out why y axis won't scale
+    plt.axis([0, len(args[0]), ymin, ymax])
+    plt.title("Normalised SVD vs LFM scores")
+    plt.xlabel("Movie IDs")
+    plt.ylabel("Normalised Score")
     plt.tight_layout()
     plt.show()
 
