@@ -1,0 +1,4 @@
+h20.ai for model (its a python package)
+normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
+use surprise knn alg instead of my own (or use surprise matrix factorisation)
+check scikit-learn for ndcg method
