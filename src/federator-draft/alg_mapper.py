@@ -1,16 +1,21 @@
 import logging.config
+import multiprocessing
 
 import pandas as pd
-from sklearn import preprocessing
+import numpy as np
 
 import helpers
 from data_handler import DataHandler
 from definitions import ROOT_DIR
-import numpy as np
-
 from knn_user import KNNUser
 from lightfm_alg import LightFMAlg
 from surprise_svd import SurpriseSVD
+
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import Lasso, Ridge, SGDRegressor
 
 
 class AlgMapper:
@@ -50,11 +55,9 @@ class AlgMapper:
                 unique_titles.append(row[col])
         return np.array(unique_array)
 
-
     # normalise the data to range 0-1, after removing unique (to one algorithm) entries and sorting by movie title
     def normalise_and_trim(self):
-        min_max_scaler = preprocessing.MinMaxScaler()
-
+        min_max_scaler = MinMaxScaler()
         # Remove duplicates
         lfm_unique = self.remove_duplicates(self.lfm_recs, 1)
         svd_unique = self.remove_duplicates(self.svd_recs, 1)
@@ -63,23 +66,51 @@ class AlgMapper:
         lfm_sorted = lfm_unique[lfm_unique[:, 1].argsort()]
         svd_sorted = svd_unique[svd_unique[:, 1].argsort()]
 
-
-
         # Remove all entries that don't exist in both lists
         svd_mask = np.in1d(svd_sorted[:, 1], lfm_sorted[:, 1])
         lfm_mask = np.in1d(lfm_sorted[:, 1], svd_sorted[:, 1])
         svd_sorted = svd_sorted[svd_mask]
         lfm_sorted = lfm_sorted[lfm_mask]
-        svd_normalised_scores = min_max_scaler.fit_transform(svd_sorted[:, 2].reshape(-1, 1))  # reshape is required to fit a 1d array
-        lfm_normalised_scores = min_max_scaler.fit_transform(lfm_sorted[:, 2].reshape(-1, 1))
+        svd_normalised_scores = min_max_scaler.fit_transform(svd_sorted[:, 2].reshape(-1, 1)).astype(float)  # reshape is required to fit a 1d array
+        lfm_normalised_scores = min_max_scaler.fit_transform(lfm_sorted[:, 2].reshape(-1, 1)).astype(float)
         return svd_normalised_scores, lfm_normalised_scores
+
+    def learn_mapping(self, scores1, scores2):
+        x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)
+
+        pipe = Pipeline([
+            ('regr', Lasso())
+        ])
+
+        param_grid = [
+            {
+                'regr': [Lasso(), Ridge()],
+                'regr__alpha': np.logspace(-4, 1, 6),
+            },
+            {
+                'regr': [SGDRegressor()],
+                'regr__alpha': np.logspace(-5, 0, 6),
+                'regr__max_iter': [500, 1000],
+            },
+        ]
+
+        grid = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1, verbose=2)  # If crash, change to n_jobs=1
+        grid.fit(x_train, y_train)
+
+        predicted = grid.predict(x_test)
+
+        print('Score:\t{}'.format(grid.score(x_test, y_test)))
 
     # TODO: create a score mapping
     # TODO: Compare to a random model to see if my model outperforms it
 
 
 if __name__ == '__main__':
+    # Allows n_jobs to be > 1
+    multiprocessing.set_start_method('spawn')
+
     user_id = 1
     mapper = AlgMapper(user_id, split_to_train=0)
     svd, lfm = mapper.normalise_and_trim()
-    helpers.create_scatter_graph(["SVD", "LFM"], ["red", "blue"], svd, lfm)
+    mapper.learn_mapping(svd, lfm)
+    #helpers.create_scatter_graph(["SVD", "LFM"], ["red", "blue"], svd, lfm)
