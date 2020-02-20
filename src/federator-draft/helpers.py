@@ -89,7 +89,7 @@ def generate_mapper(lst):
     return inverted_mapper
 
 
-def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=10, alpha=1.0):
+def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=None, alpha=None):
     if x is None:
         x = np.linspace(0, len(args[0]), len(args[0]))
         for i in range(len(args)):
@@ -98,7 +98,10 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
         for i in range(len(args)):
             plt.scatter(x[i], args[i], s=s, c=colors[i], label=key_labels[i], alpha=alpha)
     plt.legend()
-    plt.axis([0, len(args[0]), ymin, ymax])
+    x_max = 0
+    for arg in args:
+        x_max += len(arg)
+    plt.axis([0, x_max+1, ymin, ymax])
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
