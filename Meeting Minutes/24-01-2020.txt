@@ -14,7 +14,7 @@ TODO:
 X-Create class that generates a golden list for each alg from all available data
 -(optional) Create new splitting method that has some movie and user overlap in splits (instead of all unique to split)
 X-Create 2 classes that runs both algs on every individual split and calculates their scores against the golden lists
--Create class that federates data from both algs, maps their scores and generates a new list. Compare this list with both golden lists
+X-Create class that federates data from both algs, maps their scores and generates a new list. Compare this list with both golden lists
 -XFIGURE OUT NDCG! What are relevance values? How do I calculate them?X
 -XHave lfm alg work with split datasets
 

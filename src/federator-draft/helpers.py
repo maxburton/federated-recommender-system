@@ -9,7 +9,10 @@ import matplotlib.pyplot as plt
 def pretty_print_results(log, results, user_id):
     log.info('Recommendations for user {}:'.format(user_id))
     for row in results:
-        log.info('{0}: {1}, with score {2}'.format(row[0], row[1], row[2]))
+        if len(row) == 4:
+            log.info('{0}: {1}, with score {2} from the {3} algorithm'.format(row[0], row[1], row[2], row[3]))
+        else:
+            log.info('{0}: {1}, with score {2}'.format(row[0], row[1], row[2]))
 
 
 def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
@@ -86,15 +89,19 @@ def generate_mapper(lst):
     return inverted_mapper
 
 
-def create_scatter_graph(labels, colors, *args, ymin=0, ymax=1):
-    x = np.linspace(0, len(args[0]), len(args[0]))
-    for i in range(len(args)):
-        plt.scatter(x, args[i], s=2, c=colors[i], label=labels[i], alpha=0.3)
+def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=10, alpha=1.0):
+    if x is None:
+        x = np.linspace(0, len(args[0]), len(args[0]))
+        for i in range(len(args)):
+            plt.scatter(x, args[i], s=s, c=colors[i], label=key_labels[i], alpha=alpha)
+    else:
+        for i in range(len(args)):
+            plt.scatter(x[i], args[i], s=s, c=colors[i], label=key_labels[i], alpha=alpha)
     plt.legend()
     plt.axis([0, len(args[0]), ymin, ymax])
-    plt.title("Normalised SVD vs LFM scores")
-    plt.xlabel("Movie IDs")
-    plt.ylabel("Normalised Score")
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.tight_layout()
     plt.show()
 

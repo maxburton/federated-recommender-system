@@ -91,8 +91,8 @@ class DataHandler:
     def split_dataset_intermittently(self, num_of_partitions, ds=None):
         if ds is None:
             ds = self.dataset
-        return self.split_dataset_evenly(num_of_partitions,
-                                         ds=self.sort_dataset_intermittently(num_of_partitions, ds=ds))
+        return np.array(self.split_dataset_evenly(num_of_partitions,
+                                                  ds=self.sort_dataset_intermittently(num_of_partitions, ds=ds)))
 
     def split_dataset_evenly(self, num_of_partitions, ds=None):
         if ds is None:

@@ -40,9 +40,13 @@ class LightFMAlg:
 
     @staticmethod
     def print_known(user_id, known, num_known=5):
-        print("User %s likes:" % user_id)
+        print("User %d likes:" % (user_id+1))
         for i in range(num_known):
-            print("%d: %s" % (i+1, known[i]))
+            if len(known) > i:
+                print("%d: %s" % (i+1, known[i]))
+            else:
+                print("User has no more favourites!")
+                break
 
     def generate_rec(self, model, user_id, num_known=5, num_rec=10):
         n_users, n_items = self.train.shape
@@ -59,7 +63,7 @@ class LightFMAlg:
         for i in range(num_rec):
             recs.append([i+1, top_items[i], scores[i]])
         self.print_known(user_id, known_positives, num_known=num_known)
-        helpers.pretty_print_results(self.log, recs, user_id)
+        helpers.pretty_print_results(self.log, recs, user_id+1)
         return np.array(recs)
 
 

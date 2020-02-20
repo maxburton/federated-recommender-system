@@ -1,8 +1,6 @@
 from surprise import Dataset, Reader, SVD
-from surprise.model_selection.validation import cross_validate
 from definitions import ROOT_DIR
 import logging.config
-from collections import defaultdict
 import pandas as pd
 import numpy as np
 
@@ -41,7 +39,7 @@ class SurpriseSVD:
         positive_ratings = users_ratings[users_ratings[:, 2].astype(float) >= min_rating]
         self.log.info("User %d's favourite movies:" % user_id)
         for rating in positive_ratings:
-            self.log.info("%s, %.1f" % (self.mid2title[rating[1]], float(rating[2])))
+            self.log.info("%s, %.1f" % (self.mid2title[int(rating[1])], float(rating[2])))
 
     def get_top_n(self, user_id, n=10, verbose=True):
         """Return the top-N recommendation for each user from a set of predictions.

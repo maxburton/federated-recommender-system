@@ -223,3 +223,7 @@
 
 ## 18 Feb 2020
 * *4 hours* Implemented surprise svd alg
+* *2 hours* Implemented machine learned mapper
+
+## 19 Feb 2020
+* *4 hours* Implemented federator w/ machine learned mapping

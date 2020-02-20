@@ -1,5 +1,6 @@
 After experimenting with surprises SVD alg, I think there will always be a big difference between matrix factorisation algs and knn algs. 
 Since I think these will always give largely different results, is it worth experimenting to see if I can federate these? If so, how?
+What should I evaluate my federated results against?
 Surprise's SVD alg is returning perfect scores for some items. Should i try to change this behaviour?
 Should I experiment with a third alg?
 Is there any way I can use the knn algorithm I built in the diss?
@@ -7,3 +8,4 @@ Want to start writing the diss next week: where should I start? What keys aspect
 Do I need to preprocess the data so that the points line up more? Or will the model learning take care of that for me
 When trying to map and federate the alg's results together, should I run this on splits or the whole dataset? (leaning towards splits since then we don't use the training data)
 SVD takes much longer to run (I think this is to be expected), but is there a way I can speed it up?
+I want to split the data so that there is some overlap, as this is more true to real life movie systems, is it worth doing? Or have I already done this by intermittently splitting the ds?

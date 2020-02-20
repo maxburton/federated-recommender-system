@@ -1,7 +1,15 @@
--Build an item-item collaborative engine (e.g. takes 1 movie as input and returns k-neighbours similar movies)
--Build a user-item collaborative engine (e.g. based on all your ratings, return k-neighbours based on similar user's tastes)
+X-Build an item-item collaborative engine (e.g. takes 1 movie as input and returns k-neighbours similar movies)
+X-Build a user-item collaborative engine (e.g. based on all your ratings, return k-neighbours based on similar user's tastes)
 
--Find some "golden list" to compare my results to. e.g. based on a metric like rmse or WARP, OR comparing them to existing models in spotlight, lightfm and surprise
--All algorithms need to output the same format e.g. a list of recommendations
+X-Find some "golden list" to compare my results to. e.g. based on a metric like rmse or WARP, OR comparing them to existing models in spotlight, lightfm and surprise
+X-All algorithms need to output the same format e.g. a list of recommendations
 X-Make the lightfm alg also output a score per recommendation
--Update lightfm algs (and future algs) to work with my input datasets
+X-Update lightfm algs (and future algs) to work with my input datasets
+
+-Create new splitting formula that allows some movies to be shared between splits (emulates real life) (This might already be done in intermittent split)
+-Create graph of federated results
+-Update ndcg score to use the one from scikitlearn
+-Add other metrics as well as ndcg, for reporting purposes
+-Potentially use h20.ai to find better mapping models
+-Potentially include tags/genres/implicit data in the mapper to improve it
+-normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)

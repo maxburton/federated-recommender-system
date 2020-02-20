@@ -33,6 +33,7 @@ class AlgMapper:
         data.set_dataset(data.sort_dataset_by_col(movie_id_col))
         split_dataset = data.split_dataset_intermittently(n_subsets)
         split_data = split_dataset[split_to_train]
+        self.untrained_data = split_dataset[np.arange(split_dataset.shape[0]) != split_to_train]  # all but one index
 
         """
         knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, split_data),
@@ -57,11 +58,11 @@ class AlgMapper:
 
     # normalise the data to range 0-1, after removing unique (to one algorithm) entries and sorting by movie title
     def normalise_and_trim(self):
-        min_max_scaler = MinMaxScaler()
         # Remove duplicates
         lfm_unique = self.remove_duplicates(self.lfm_recs, 1)
         svd_unique = self.remove_duplicates(self.svd_recs, 1)
 
+        # Sort all entries by title so their indexes are synced
         #knn_sorted = self.knn_recs[self.knn_recs[:, 1].argsort()]
         lfm_sorted = lfm_unique[lfm_unique[:, 1].argsort()]
         svd_sorted = svd_unique[svd_unique[:, 1].argsort()]
@@ -71,9 +72,15 @@ class AlgMapper:
         lfm_mask = np.in1d(lfm_sorted[:, 1], svd_sorted[:, 1])
         svd_sorted = svd_sorted[svd_mask]
         lfm_sorted = lfm_sorted[lfm_mask]
-        svd_normalised_scores = min_max_scaler.fit_transform(svd_sorted[:, 2].reshape(-1, 1)).astype(float)  # reshape is required to fit a 1d array
-        lfm_normalised_scores = min_max_scaler.fit_transform(lfm_sorted[:, 2].reshape(-1, 1)).astype(float)
+
+        svd_normalised_scores = self.scale_scores(svd_sorted[:, 2])  # reshape to a 1d array represented as a column
+        lfm_normalised_scores = self.scale_scores(lfm_sorted[:, 2])
         return svd_normalised_scores, lfm_normalised_scores
+
+    def scale_scores(self, scores):
+        min_max_scaler = MinMaxScaler()
+        scaled_score = min_max_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
+        return scaled_score
 
     def learn_mapping(self, scores1, scores2):
         x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)
@@ -97,12 +104,10 @@ class AlgMapper:
         grid = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1, verbose=2)  # If crash, change to n_jobs=1
         grid.fit(x_train, y_train)
 
-        predicted = grid.predict(x_test)
+        #predicted = grid.predict(x_test)
 
-        print('Score:\t{}'.format(grid.score(x_test, y_test)))
-
-    # TODO: create a score mapping
-    # TODO: Compare to a random model to see if my model outperforms it
+        self.log.info('Score:\t{}'.format(grid.score(x_test, y_test)))
+        return grid
 
 
 if __name__ == '__main__':
@@ -112,5 +117,6 @@ if __name__ == '__main__':
     user_id = 1
     mapper = AlgMapper(user_id, split_to_train=0)
     svd, lfm = mapper.normalise_and_trim()
-    mapper.learn_mapping(svd, lfm)
-    #helpers.create_scatter_graph(["SVD", "LFM"], ["red", "blue"], svd, lfm)
+    model = mapper.learn_mapping(svd, lfm)
+    helpers.create_scatter_graph("Normalised SVD vs LFM scores", "Movie IDs", "Normalised Score", ["SVD", "LFM"],
+                                 ["red", "blue"], svd, lfm)
