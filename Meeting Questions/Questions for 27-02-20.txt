@@ -1,0 +1,14 @@
+Is what I have enough to write a diss on?
+-Currently a crude mapper (will try to improve with h20.ai
+-Individual splits mapper that mirrors reality
+-ndcg results of both of these federators
+
+I think I need more
+
+Here's what I've done for the diss so far, could you check it for me?
+-Abstract
+-Background
+-Related Works
+
+Which section should my algorithm descriptions/choices/explanations be?
+Perhaps check to see if scale (i.e. bigger movielens datsets) affects the federator?
