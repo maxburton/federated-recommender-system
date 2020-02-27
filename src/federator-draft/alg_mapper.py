@@ -42,7 +42,7 @@ class AlgMapper:
         """
 
         alg_warp = LightFMAlg("warp", ds=split_data)  # warp or bpr
-        self.lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id - 1, num_rec=-1)  # lfm is zero indexed
+        self.lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
 
         svd = SurpriseSVD()
         self.svd_recs = svd.get_top_n(user_id, n=-1)
@@ -68,14 +68,14 @@ class AlgMapper:
         svd_sorted = svd_unique[svd_unique[:, 1].argsort()]
 
         # Remove all entries that don't exist in both lists
-        svd_mask = np.in1d(svd_sorted[:, 1], lfm_sorted[:, 1])
         lfm_mask = np.in1d(lfm_sorted[:, 1], svd_sorted[:, 1])
-        svd_sorted = svd_sorted[svd_mask]
+        svd_mask = np.in1d(svd_sorted[:, 1], lfm_sorted[:, 1])
         lfm_sorted = lfm_sorted[lfm_mask]
+        svd_sorted = svd_sorted[svd_mask]
 
-        svd_normalised_scores = self.scale_scores(svd_sorted[:, 2])  # reshape to a 1d array represented as a column
-        lfm_normalised_scores = self.scale_scores(lfm_sorted[:, 2])
-        return svd_normalised_scores, lfm_normalised_scores
+        lfm_normalised_scores = self.scale_scores(lfm_sorted[:, 2])  # reshape to a 1d array represented as a column
+        svd_normalised_scores = self.scale_scores(svd_sorted[:, 2])
+        return lfm_normalised_scores, svd_normalised_scores
 
     def scale_scores(self, scores):
         min_max_scaler = MinMaxScaler()

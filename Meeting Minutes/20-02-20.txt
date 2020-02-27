@@ -1,5 +1,5 @@
 discuss svd sometimes overshadowing lfm
-fix rmse so that it means sometimes (e.g. divide by mean or average)
+fix rmse so that it means something (e.g. divide by mean or average)
 also try different metrics e.g. r squared
 perhaps adding a splitting methods which separates entire movies or entire users
 have a golden list for each alg that runs on the entire dataset, and another golden list from just the split we're testing.

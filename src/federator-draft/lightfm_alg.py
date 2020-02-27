@@ -49,6 +49,7 @@ class LightFMAlg:
                 break
 
     def generate_rec(self, model, user_id, num_known=5, num_rec=10):
+        user_id -= 1  # lfm is zero indexed
         n_users, n_items = self.train.shape
         # for user_id in user_ids:  # if i want to support multi user entry in the future
         known_positives = self.labels[self.train.tocsr()[user_id].indices]
@@ -68,8 +69,9 @@ class LightFMAlg:
 
 
 if __name__ == "__main__":
+    user_id = 1
     alg_bpr = LightFMAlg("bpr")  # warp or bpr
-    alg_bpr.generate_rec(alg_bpr.model, 0, num_rec=20)
+    alg_bpr.generate_rec(alg_bpr.model, user_id, num_rec=20)
 
     alg_warp = LightFMAlg("warp")  # warp or bpr
-    alg_warp.generate_rec(alg_warp.model, 0, num_rec=20)
+    alg_warp.generate_rec(alg_warp.model, user_id, num_rec=20)

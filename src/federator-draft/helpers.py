@@ -1,9 +1,11 @@
 import itertools
-
+import os
+import pandas as pd
 import numpy as np
 import scipy.sparse as sp
 from lightfm.data import Dataset
 import matplotlib.pyplot as plt
+from definitions import ROOT_DIR
 
 
 def pretty_print_results(log, results, user_id):
@@ -22,7 +24,7 @@ def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
 # TODO: assign non-binary scores (i.e. higher the relevancy = higher relevancy value)
 def get_relevant_values(recs, golden):
     relevant_values = []
-    golden_movie_names = golden[:,1]
+    golden_movie_names = golden[:, 1]
     from_name_to_rank = {k: v for v, k in enumerate(golden_movie_names, start=1)}
     for rec in recs:
         r_value = 0
@@ -32,6 +34,18 @@ def get_relevant_values(recs, golden):
             r_value = 1 + 2/((len(golden_movie_names)/2) + distance/len(golden_movie_names)/2)
         relevant_values.append(r_value)
     return relevant_values
+
+
+def get_relevant_values_2(golden, predicted, k=5):
+    golden_arr = np.arange(1, k+1)
+    predicted_arr = np.full(k, k*3)
+    predicted_movie_names = predicted[:, 1]
+    for i in range(k):
+        title = golden[i][1]
+        predicted_rank = predicted[i][0]
+        if title in predicted_movie_names:
+            predicted_arr[i] = predicted_rank
+    return np.expand_dims(golden_arr, axis=0), np.expand_dims(predicted_arr, axis=0)
 
 
 def lfm_data_mapper(ds):
@@ -87,6 +101,17 @@ def generate_mapper(lst):
     inverted_mapper = {v: k for k, v in mapper.items()}
 
     return inverted_mapper
+
+
+def generate_movietitle2id_mapper(filename="/datasets/ml-latest-small/movies.csv"):
+    df_movies = pd.read_csv(
+        os.path.join(ROOT_DIR, filename),
+        usecols=['movieId', 'title'],
+        dtype={'movieId': 'int32', 'title': 'str'})
+
+    titles = df_movies.title
+    ids = df_movies.movieId
+    return {k: v for k, v in zip(titles, ids)}
 
 
 def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=None, alpha=None):

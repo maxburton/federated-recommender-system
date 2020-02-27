@@ -1,9 +1,12 @@
 Is what I have enough to write a diss on?
--Currently a crude mapper (will try to improve with h20.ai
+-Currently a crude mapper (will try to improve with h20.ai)
 -Individual splits mapper that mirrors reality
 -ndcg results of both of these federators
 
-I think I need more
+for ncdg: how should i calculate relevant values?
+
+I think I need more, e.g.:
+-use implicit data to improve mapper
 
 Here's what I've done for the diss so far, could you check it for me?
 -Abstract
@@ -11,4 +14,4 @@ Here's what I've done for the diss so far, could you check it for me?
 -Related Works
 
 Which section should my algorithm descriptions/choices/explanations be?
-Perhaps check to see if scale (i.e. bigger movielens datsets) affects the federator?
+Perhaps check to see if scale (i.e. bigger movielens datsets) affects the federator? or should I run the final federator on a larger dataset?

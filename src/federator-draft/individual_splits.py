@@ -8,6 +8,7 @@ from golden_list import GoldenList
 from knn_user import KNNUser
 from lightfm_alg import LightFMAlg
 from surprise_svd import SurpriseSVD
+from sklearn.metrics import ndcg_score
 
 """
 Runs each alg on individual splits, then calculates their score against their respective golden list
@@ -29,45 +30,44 @@ class IndividualSplits:
         data.set_dataset(data.sort_dataset_by_col(movie_id_col))
         self.split_dataset = data.split_dataset_intermittently(n_subsets)
 
+    def get_ndcg_score(self, golden, split_recs, k=10):
+        golden_r, predicted_r = helpers.get_relevant_values_2(split_recs, golden, k=k)
+        return ndcg_score(golden_r, predicted_r, k)
+
     # TODO: XCreate the splitsX, Xrun each alg on the splitsX, Xand for each split calculate score against golden listX
-    def run_on_splits_knn(self, user_id, golden, num_of_recs=20):
+    def run_on_splits_knn(self, user_id, golden, num_of_recs=20, k=10):
         scores = []
         for i in range(len(self.split_dataset)):
             knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, self.split_dataset[i]),
                            p_thresh=0, u_thresh=0)
             split_recs = knnu.make_recommendation(num_of_recs=num_of_recs)
-            r_values = helpers.get_relevant_values(split_recs, golden)
-            k = 10  # (NDCG@k)
-            scores.append(helpers.ndcg_at_k(r_values, k))
+            scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores
 
-    def run_on_splits_lfm(self, user_id, golden, num_of_recs=20):
+    def run_on_splits_lfm(self, user_id, golden, num_of_recs=20, k=10):
         scores = []
         for i in range(len(self.split_dataset)):
             alg_warp = LightFMAlg("warp", ds=self.split_dataset[i])  # warp or bpr
-            split_recs = alg_warp.generate_rec(alg_warp.model, user_id-1, num_rec=num_of_recs)  # lfm is zero indexed
-            r_values = helpers.get_relevant_values(split_recs, golden)
-            k = 10  # (NDCG@k)
-            scores.append(helpers.ndcg_at_k(r_values, k))
+            split_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=num_of_recs)
+            scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores
 
-    def run_on_splits_svd(self, user_id, golden, num_of_recs=20):
+    def run_on_splits_svd(self, user_id, golden, num_of_recs=20, k=10):
         scores = []
         for i in range(len(self.split_dataset)):
             svd = SurpriseSVD(ds=self.split_dataset[i])
             split_recs = svd.get_top_n(user_id, n=num_of_recs)
-            r_values = helpers.get_relevant_values(split_recs, golden)
-            k = 10  # (NDCG@k)
-            scores.append(helpers.ndcg_at_k(r_values, k))
+            scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores
 
 
 if __name__ == '__main__':
     user_id = 1
     golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(user_id, num_of_recs=100)
-    #knn_scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn)
-    lfm_scores = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm)
-    svd_scores = IndividualSplits().run_on_splits_svd(user_id, golden_svd)
+    k=20
+    #knn_scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn, k=k)
+    lfm_scores = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm, k=k)
+    svd_scores = IndividualSplits().run_on_splits_svd(user_id, golden_svd, k=k)
     #print("KNN: %s" % str(knn_scores))
     print("LFM: %s" % str(lfm_scores))
     print("SVD: %s" % str(svd_scores))

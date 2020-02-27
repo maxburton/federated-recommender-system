@@ -6,10 +6,12 @@ X-All algorithms need to output the same format e.g. a list of recommendations
 X-Make the lightfm alg also output a score per recommendation
 X-Update lightfm algs (and future algs) to work with my input datasets
 
--Create new splitting formula that allows some movies to be shared between splits (emulates real life) (This might already be done in intermittent split)
+X-Create new splitting formula that allows some movies to be shared between splits (emulates real life) (This might already be done in intermittent split)
 -Create graph of federated results
 -Update ndcg score to use the one from scikitlearn
+-Experiment with different relevance values for ndcg
 -Add other metrics as well as ndcg, for reporting purposes
 -Potentially use h20.ai to find better mapping models
 -Potentially include tags/genres/implicit data in the mapper to improve it
 -normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
+-Save svd to file to reduce runtime

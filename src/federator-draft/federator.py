@@ -1,3 +1,5 @@
+from sklearn.metrics import ndcg_score
+
 from definitions import ROOT_DIR
 import logging.config
 from golden_list import GoldenList
@@ -17,7 +19,9 @@ class Federator:
 
     def __init__(self, user_id):
         self.user_id = user_id
+        self.golden_knn, self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id)
 
+    # TODO: Should probably remove or move this to a new class
     def run_on_splits(self):
         golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(self.user_id)
         #split_scores_knn = IndividualSplits().run_on_splits_knn(self.user_id, golden_knn)
@@ -26,8 +30,8 @@ class Federator:
 
     def federate_results(self, n):
         mapper = AlgMapper(self.user_id, split_to_train=0)
-        svd, lfm = mapper.normalise_and_trim()
-        model = mapper.learn_mapping(svd, lfm)
+        lfm, svd = mapper.normalise_and_trim()
+        model = mapper.learn_mapping(lfm, svd)
 
         splits = mapper.untrained_data
         split_to_predict = 0
@@ -35,7 +39,7 @@ class Federator:
 
         # Get LFM's recs
         alg_warp = LightFMAlg("warp", ds=dataset)
-        lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id - 1, num_rec=n)  # lfm is zero indexed
+        lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=n)
         lfm_recs = np.c_[lfm_recs, np.full(lfm_recs.shape[0], "lfm")]  # append new column of "lfm" to recs
 
         # Get Surprise's SVD recs
@@ -57,13 +61,18 @@ class Federator:
         helpers.pretty_print_results(self.log, federated_recs, self.user_id)
 
         # Separate algorithm scores for graph mapping
-        federated_svd_recs = federated_recs[federated_recs[:, 3] == "svd"]
         federated_lfm_recs = federated_recs[federated_recs[:, 3] == "lfm"]
+        federated_svd_recs = federated_recs[federated_recs[:, 3] == "svd"]
         helpers.create_scatter_graph("Federated Results", "Ranking", "Normalised Score",
-                                     ["SVD", "LFM"], ["red", "blue"],
-                                     federated_svd_recs[:, 2].astype(float),
+                                     ["LFM", "SVD"], ["red", "blue"],
                                      federated_lfm_recs[:, 2].astype(float),
-                                     x=[federated_svd_recs[:, 0].astype(int), federated_lfm_recs[:, 0].astype(int)])
+                                     federated_svd_recs[:, 2].astype(float),
+                                     x=[federated_lfm_recs[:, 0].astype(int), federated_svd_recs[:, 0].astype(int)])
+
+        golden_r_lfm, predicted_r_lfm = helpers.get_relevant_values_2(self.golden_lfm, federated_recs, k=n)
+        golden_r_svd, predicted_r_svd = helpers.get_relevant_values_2(self.golden_svd, federated_recs, k=n)
+        print("LFM NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_lfm, golden_r_lfm, n)))
+        print("SVD NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_svd, golden_r_svd, n)))
 
 
 if __name__ == '__main__':
