@@ -82,6 +82,8 @@ class Federator:
         print("LFM NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_lfm, golden_r_lfm, n)))
         print("SVD NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_svd, golden_r_svd, n)))
 
+        # TODO: Implement precision and recall and perhaps accuracy scores
+
 
 if __name__ == '__main__':
     # Allows n_jobs to be > 1
