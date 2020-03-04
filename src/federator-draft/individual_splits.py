@@ -63,7 +63,7 @@ class IndividualSplits:
 
 if __name__ == '__main__':
     user_id = 1
-    golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(user_id, num_of_recs=100)
+    golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(user_id, num_of_recs=-1)
     k=20
     #knn_scores = IndividualSplits().run_on_splits_knn(user_id, golden_knn, k=k)
     lfm_scores = IndividualSplits().run_on_splits_lfm(user_id, golden_lfm, k=k)

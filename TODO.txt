@@ -15,3 +15,4 @@ X-Create new splitting formula that allows some movies to be shared between spli
 -Potentially include tags/genres/implicit data in the mapper to improve it
 -normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
 -Save svd to file to reduce runtime
+-Check why theres a key error in golden list

@@ -1,0 +1,11 @@
+use precison/recall/accuracy for checking rankings (e.g. how many items exist in the predicted arr that also exist in the golden list)
+for ndcg use the scores predicted by the algs, and use raw svd with mapped lfm to svd scores with the golden svd and vice versa for lfm
+(for ndcg) map the top k items in the predicted arr to their scores in the golden list
+Or generate the entire scored list in order of movie and and input both in with a set k
+
+Intro just sets the scene, provide motivations
+Mention that the program can work with other datasets/parameters with not much change, its not a bespoke solultion
+In related work: explain how those works are not good enough and how mine differs (e.g. Richard's applies to search engines whereas ours applies to recs)
+And this is probably the first work to do this (check online if true)
+Look back at the papers nikos sent me in summer and include those related work
+instead of inputting just the score, also include the one hot encoding of genres for eg

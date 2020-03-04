@@ -19,11 +19,11 @@ class Federator:
 
     def __init__(self, user_id):
         self.user_id = user_id
-        self.golden_knn, self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id)
+        self.golden_knn, self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1)
 
     # TODO: Should probably remove or move this to a new class
     def run_on_splits(self):
-        golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(self.user_id)
+        golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1)
         #split_scores_knn = IndividualSplits().run_on_splits_knn(self.user_id, golden_knn)
         split_scores_lfm = IndividualSplits().run_on_splits_lfm(self.user_id, golden_lfm)
         split_scores_svd = IndividualSplits().run_on_splits_svd(self.user_id, golden_svd)
@@ -69,8 +69,8 @@ class Federator:
                                      federated_svd_recs[:, 2].astype(float),
                                      x=[federated_lfm_recs[:, 0].astype(int), federated_svd_recs[:, 0].astype(int)])
 
-        golden_r_lfm, predicted_r_lfm = helpers.get_relevant_values_2(self.golden_lfm, federated_recs, k=n)
-        golden_r_svd, predicted_r_svd = helpers.get_relevant_values_2(self.golden_svd, federated_recs, k=n)
+        golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm, federated_recs, k=n)
+        golden_r_svd, predicted_r_svd = helpers.order_top_k_items(self.golden_svd, federated_recs, k=n)
         print("LFM NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_lfm, golden_r_lfm, n)))
         print("SVD NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_svd, golden_r_svd, n)))
 
@@ -79,6 +79,6 @@ if __name__ == '__main__':
     # Allows n_jobs to be > 1
     multiprocessing.set_start_method('spawn')
 
-    user_id = 4
+    user_id = 5
     fed = Federator(user_id)
     fed.federate_results(20)

@@ -24,15 +24,15 @@ class GoldenList:
         lfm_metric = "warp"  # warp or bpr
         self.log.info("LFM (%s) Golden List:" % lfm_metric)
         lfm_model = LightFMAlg(lfm_metric)
-        golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=20)
+        golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=num_of_recs)
 
         self.log.info("SVD Golden List:")
         svd = SurpriseSVD()
-        golden_svd = svd.get_top_n(user_id, n=20)
+        golden_svd = svd.get_top_n(user_id, n=num_of_recs)
 
         return golden_knn, golden_lfm, golden_svd
 
 
 if __name__ == '__main__':
     user_id = 1
-    golden_lists = GoldenList().generate_lists(user_id)
+    golden_lists = GoldenList().generate_lists(user_id, num_of_recs=-1)

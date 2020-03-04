@@ -36,7 +36,7 @@ def get_relevant_values(recs, golden):
     return relevant_values
 
 
-def get_relevant_values_2(golden, predicted, k=5):
+def get_relevant_values_2(golden, predicted, k=10):
     golden_arr = np.arange(1, k+1)
     predicted_arr = np.full(k, k*3)
     predicted_movie_names = predicted[:, 1]
@@ -46,6 +46,19 @@ def get_relevant_values_2(golden, predicted, k=5):
         if title in predicted_movie_names:
             predicted_arr[i] = predicted_rank
     return np.expand_dims(golden_arr, axis=0), np.expand_dims(predicted_arr, axis=0)
+
+
+def order_top_k_items(golden, predicted, k=10, filename="/datasets/ml-latest-small/movies.csv"):
+    title2id = generate_movietitle2id_mapper(filename=filename)
+    golden_ids = {}
+    for i in range(len(golden)):
+        golden_ids[title2id[golden[i][1]]] = golden[i]
+    predicted = predicted[:k]
+    relevance_values = []
+    for title in predicted:
+        golden_score = golden_ids[title2id[title[1]]][2]  # aka relevance score
+        relevance_values.append(golden_score)
+    return np.array(relevance_values), predicted
 
 
 def lfm_data_mapper(ds):
@@ -104,8 +117,9 @@ def generate_mapper(lst):
 
 
 def generate_movietitle2id_mapper(filename="/datasets/ml-latest-small/movies.csv"):
+    filepath = ROOT_DIR + filename
     df_movies = pd.read_csv(
-        os.path.join(ROOT_DIR, filename),
+        filepath,
         usecols=['movieId', 'title'],
         dtype={'movieId': 'int32', 'title': 'str'})
 
