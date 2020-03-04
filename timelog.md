@@ -227,3 +227,28 @@
 
 ## 19 Feb 2020
 * *4 hours* Implemented federator w/ machine learned mapping
+* *1 hour* Meeting with nikos
+
+## 21 Feb 2020
+* *3 hours* Started writing diss
+
+## Week 22
+ 
+## 24 Feb 2020
+* *2 hours* Continued writing diss (related work)
+* *2 hours* Implemented sklearn's ndcg score
+
+## 25 Feb 2020
+* *2 hours* Continued writing diss (related work)
+
+## 27 Feb 2020
+* *1 hour* meeting with nikos
+* *2 hours* fixing ndcg scores giving key errors
+
+## Week 23
+
+## 2 Mar 2020
+* *2 hours* Continued writing diss (abstract, background)
+
+## 4 Mar 2020
+* *2 hours* Fixing ndcg score function

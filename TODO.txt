@@ -16,3 +16,8 @@ X-Create new splitting formula that allows some movies to be shared between spli
 -normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
 -Save svd to file to reduce runtime
 -Check why theres a key error in golden list
+-Save svd to file to reduce runtime
+-Try weighted recommender approach as well as mapped (should be more primitive than mapped)
+-Try switching recommender that simply picks the better recommender (should be more primitive than weighted)
+-If i have time: look into a pipelined recommender
+-Look at slides on hybrid recommenders in the rec sys course, and use their papers for ideas or to cite as existing works
