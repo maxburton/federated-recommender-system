@@ -3,25 +3,35 @@ from definitions import ROOT_DIR
 import logging.config
 import pandas as pd
 import numpy as np
+import helpers
 
 
 class SurpriseSVD:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, ds=None):
-        df_movies = pd.read_csv(
-            ROOT_DIR + "/datasets/ml-latest-small/movies.csv",
-            usecols=['movieId', 'title'],
-            dtype={'movieId': 'int', 'title': 'str'})
-        self.mid2title = {k: v for k, v in zip(df_movies["movieId"], df_movies["title"])}
+    # Can save and load the svd array to file
+    def __init__(self, ds=None, save=True, load=True, save_filename="/svd.npy", load_filename="/svd.npy"):
+        # Create mapper from movie id to title
+        self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
 
+        # Read data from file (or ds)
         reader = Reader(line_format='user item rating timestamp', sep=",", skip_lines=1)
         if ds is None:
             self.data = Dataset.load_from_file(ROOT_DIR+"/datasets/ml-latest-small/ratings.csv", reader=reader)
         else:
             reader = Reader(line_format='user item rating timestamp', sep=",")
             self.data = Dataset.load_from_df(pd.DataFrame(ds[:, 0:3], columns=["user", "item", "rating"]), reader=reader)
+
+        save_filename = ROOT_DIR + save_filename
+        load_filename = ROOT_DIR + load_filename
+        if load:
+            try:
+                self.predictions = self.load_svd_from_file(load_filename)
+                return
+            except FileNotFoundError:
+                self.log.warning("File doesn't exist! Generating SVD from scratch.")
+
         algo = SVD()
         #results = cross_validate(algo, data, measures=['RMSE', 'MAE'])
         #print(repr(results))
@@ -30,7 +40,14 @@ class SurpriseSVD:
         testset = trainset.build_anti_testset()
 
         algo.fit(trainset)
-        self.predictions = np.array(algo.test(testset))  # TODO: See if I can make this faster (e.g. only calculate one user)
+        svd_array = np.array(algo.test(testset))
+        self.predictions = svd_array
+
+        if save:
+            np.save(save_filename, svd_array)
+
+    def load_svd_from_file(self, filename):
+        return np.load(filename, allow_pickle=True)
 
     def print_user_favourites(self, user_id, min_rating=4.0):
         ratings = np.array(self.data.raw_ratings)
@@ -48,7 +65,7 @@ class SurpriseSVD:
             predictions(list of Prediction objects): The list of predictions, as
                 returned by the test method of an algorithm.
             n(int): The number of recommendation to output for each user. Default
-                is 10.
+                is 10. -1 returns all available recommendations.
             verbose(bool): if True, prints the top n results
 
         Returns:
@@ -74,6 +91,8 @@ class SurpriseSVD:
 
         if verbose:
             self.log.info("Recommendations for user %d" % user_id)
+
+        # Get the top n recommendations
         for i in range(n):
             movie_id = int(top_n[i][0])
             score = top_n[i][1]

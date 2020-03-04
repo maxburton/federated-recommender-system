@@ -55,7 +55,7 @@ class IndividualSplits:
     def run_on_splits_svd(self, user_id, golden, num_of_recs=20, k=10):
         scores = []
         for i in range(len(self.split_dataset)):
-            svd = SurpriseSVD(ds=self.split_dataset[i])
+            svd = SurpriseSVD(ds=self.split_dataset[i], save=False, load=False)
             split_recs = svd.get_top_n(user_id, n=num_of_recs)
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores

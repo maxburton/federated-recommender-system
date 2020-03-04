@@ -73,14 +73,9 @@ class AlgMapper:
         lfm_sorted = lfm_sorted[lfm_mask]
         svd_sorted = svd_sorted[svd_mask]
 
-        lfm_normalised_scores = self.scale_scores(lfm_sorted[:, 2])  # reshape to a 1d array represented as a column
-        svd_normalised_scores = self.scale_scores(svd_sorted[:, 2])
+        lfm_normalised_scores = helpers.scale_scores(lfm_sorted[:, 2])  # reshape to a 1d array represented as a column
+        svd_normalised_scores = helpers.scale_scores(svd_sorted[:, 2])
         return lfm_normalised_scores, svd_normalised_scores
-
-    def scale_scores(self, scores):
-        min_max_scaler = MinMaxScaler()
-        scaled_score = min_max_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
-        return scaled_score
 
     def learn_mapping(self, scores1, scores2):
         x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)

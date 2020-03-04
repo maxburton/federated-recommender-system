@@ -5,6 +5,8 @@ import numpy as np
 import scipy.sparse as sp
 from lightfm.data import Dataset
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+
 from definitions import ROOT_DIR
 
 
@@ -21,44 +23,35 @@ def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
     return pd.DataFrame(data=a[:, first_col:last_col], columns=['userId', 'movieId', 'rating'])
 
 
-# TODO: assign non-binary scores (i.e. higher the relevancy = higher relevancy value)
-def get_relevant_values(recs, golden):
-    relevant_values = []
-    golden_movie_names = golden[:, 1]
-    from_name_to_rank = {k: v for v, k in enumerate(golden_movie_names, start=1)}
-    for rec in recs:
-        r_value = 0
-        rank, movie_name, _ = rec
-        if movie_name in golden_movie_names:
-            distance = abs(from_name_to_rank[movie_name] - int(rank))
-            r_value = 1 + 2/((len(golden_movie_names)/2) + distance/len(golden_movie_names)/2)
-        relevant_values.append(r_value)
-    return relevant_values
-
-
-def get_relevant_values_2(golden, predicted, k=10):
-    golden_arr = np.arange(1, k+1)
-    predicted_arr = np.full(k, k*3)
-    predicted_movie_names = predicted[:, 1]
-    for i in range(k):
-        title = golden[i][1]
-        predicted_rank = predicted[i][0]
-        if title in predicted_movie_names:
-            predicted_arr[i] = predicted_rank
-    return np.expand_dims(golden_arr, axis=0), np.expand_dims(predicted_arr, axis=0)
-
-
-def order_top_k_items(golden, predicted, k=10, filename="/datasets/ml-latest-small/movies.csv"):
+# Returns the respective golden scores for the top k predicted items
+def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-latest-small/movies.csv"):
     title2id = generate_movietitle2id_mapper(filename=filename)
     golden_ids = {}
+
+    # Get all movie ids in the golden list, mapped to their golden ranking/score
     for i in range(len(golden)):
         golden_ids[title2id[golden[i][1]]] = golden[i]
     predicted = predicted[:k]
+
+    # for each predicted item, get its respective score from the golden list
     relevance_values = []
     for title in predicted:
-        golden_score = golden_ids[title2id[title[1]]][2]  # aka relevance score
-        relevance_values.append(golden_score)
-    return np.array(relevance_values), predicted
+        try:
+            golden_score = golden_ids[title2id[title[1]]][2]  # aka relevance score
+            relevance_values.append(golden_score)
+        except KeyError:
+            log.warning("This item doesn't exist in the golden list, assigning score of 0")
+            relevance_values.append(0)
+            continue
+
+    # Add another dimension to play nice with sklearn's ndcg
+    return np.array([relevance_values]).astype(float), np.array([predicted[:, 2]]).astype(float)
+
+
+def scale_scores(scores):
+    min_max_scaler = MinMaxScaler()
+    scaled_score = min_max_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
+    return scaled_score
 
 
 def lfm_data_mapper(ds):
@@ -121,11 +114,20 @@ def generate_movietitle2id_mapper(filename="/datasets/ml-latest-small/movies.csv
     df_movies = pd.read_csv(
         filepath,
         usecols=['movieId', 'title'],
-        dtype={'movieId': 'int32', 'title': 'str'})
+        dtype={'movieId': 'int', 'title': 'str'})
 
-    titles = df_movies.title
-    ids = df_movies.movieId
-    return {k: v for k, v in zip(titles, ids)}
+    return {k: v for k, v in zip(df_movies["title"], df_movies["movieId"])}
+
+
+# We can't simply reverse the previous mapper because duplicate titles exist in the dataset (movies.csv)
+def generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv"):
+    filepath = ROOT_DIR + filename
+    df_movies = pd.read_csv(
+        filepath,
+        usecols=['movieId', 'title'],
+        dtype={'movieId': 'int', 'title': 'str'})
+
+    return {k: v for k, v in zip(df_movies["movieId"], df_movies["title"])}
 
 
 def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=None, alpha=None):
@@ -148,78 +150,29 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
     plt.show()
 
 
-"""
-NDCG Metrics
-(from https://gist.github.com/bwhite/3726239)
-"""
+# DEPRECATED HELPERS:
 
-def dcg_at_k(r, k, method=0):
-    """Score is discounted cumulative gain (dcg)
-    Relevance is positive real values.  Can use binary
-    as the previous methods.
-    Example from
-    http://www.stanford.edu/class/cs276/handouts/EvaluationNew-handout-6-per.pdf
-    >>> r = [3, 2, 3, 0, 0, 1, 2, 2, 3, 0]
-    >>> dcg_at_k(r, 1)
-    3.0
-    >>> dcg_at_k(r, 1, method=1)
-    3.0
-    >>> dcg_at_k(r, 2)
-    5.0
-    >>> dcg_at_k(r, 2, method=1)
-    4.2618595071429155
-    >>> dcg_at_k(r, 10)
-    9.6051177391888114
-    >>> dcg_at_k(r, 11)
-    9.6051177391888114
-    Args:
-        r: Relevance scores (list or numpy) in rank order
-            (first element is the first item)
-        k: Number of results to consider
-        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
-                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
-    Returns:
-        Discounted cumulative gain
-    """
-    r = np.asfarray(r)[:k]
-    if r.size:
-        if method == 0:
-            return r[0] + np.sum(r[1:] / np.log2(np.arange(2, r.size + 1)))
-        elif method == 1:
-            return np.sum(r / np.log2(np.arange(2, r.size + 2)))
-        else:
-            raise ValueError('method must be 0 or 1.')
-    return 0.
+def get_relevant_values(recs, golden):
+    relevant_values = []
+    golden_movie_names = golden[:, 1]
+    from_name_to_rank = {k: v for v, k in enumerate(golden_movie_names, start=1)}
+    for rec in recs:
+        r_value = 0
+        rank, movie_name, _ = rec
+        if movie_name in golden_movie_names:
+            distance = abs(from_name_to_rank[movie_name] - int(rank))
+            r_value = 1 + 2/((len(golden_movie_names)/2) + distance/len(golden_movie_names)/2)
+        relevant_values.append(r_value)
+    return relevant_values
 
 
-def ndcg_at_k(r, k, method=0):
-    """Score is normalized discounted cumulative gain (ndcg)
-    Relevance is positive real values.  Can use binary
-    as the previous methods.
-    Example from
-    http://www.stanford.edu/class/cs276/handouts/EvaluationNew-handout-6-per.pdf
-    >>> r = [3, 2, 3, 0, 0, 1, 2, 2, 3, 0]
-    >>> ndcg_at_k(r, 1)
-    1.0
-    >>> r = [2, 1, 2, 0]
-    >>> ndcg_at_k(r, 4)
-    0.9203032077642922
-    >>> ndcg_at_k(r, 4, method=1)
-    0.96519546960144276
-    >>> ndcg_at_k([0], 1)
-    0.0
-    >>> ndcg_at_k([1], 2)
-    1.0
-    Args:
-        r: Relevance scores (list or numpy) in rank order
-            (first element is the first item)
-        k: Number of results to consider
-        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
-                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
-    Returns:
-        Normalized discounted cumulative gain
-    """
-    dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
-    if not dcg_max:
-        return 0.
-    return dcg_at_k(r, k, method) / dcg_max
+def get_relevant_values_2(golden, predicted, k=10):
+    golden_arr = np.arange(1, k+1)
+    predicted_arr = np.full(k, k*3)
+    predicted_movie_names = predicted[:, 1]
+    for i in range(k):
+        title = golden[i][1]
+        predicted_rank = predicted[i][0]
+        if title in predicted_movie_names:
+            predicted_arr[i] = predicted_rank
+    return np.expand_dims(golden_arr, axis=0), np.expand_dims(predicted_arr, axis=0)

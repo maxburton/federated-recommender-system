@@ -21,6 +21,11 @@ class Federator:
         self.user_id = user_id
         self.golden_knn, self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1)
 
+        # Normalise golden list scores
+        self.golden_knn[:, 2] = helpers.scale_scores(self.golden_knn[:, 2]).flatten()
+        self.golden_lfm[:, 2] = helpers.scale_scores(self.golden_lfm[:, 2]).flatten()
+        self.golden_svd[:, 2] = helpers.scale_scores(self.golden_svd[:, 2]).flatten()
+
     # TODO: Should probably remove or move this to a new class
     def run_on_splits(self):
         golden_knn, golden_lfm, golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1)
@@ -29,6 +34,8 @@ class Federator:
         split_scores_svd = IndividualSplits().run_on_splits_svd(self.user_id, golden_svd)
 
     def federate_results(self, n):
+        # TODO: check performance difference between mapping svd to lfm AND lfm to svd
+        # Normalise and map scores
         mapper = AlgMapper(self.user_id, split_to_train=0)
         lfm, svd = mapper.normalise_and_trim()
         model = mapper.learn_mapping(lfm, svd)
@@ -49,8 +56,8 @@ class Federator:
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
 
         # Scale scores
-        lfm_recs[:, 2] = mapper.scale_scores(lfm_recs[:, 2]).reshape(-1)  # reshape to convert back to 1d row array
-        svd_recs[:, 2] = model.predict(mapper.scale_scores(svd_recs[:, 2])).reshape(-1)
+        lfm_recs[:, 2] = helpers.scale_scores(lfm_recs[:, 2]).reshape(-1)  # reshape to convert back to 1d row array
+        svd_recs[:, 2] = model.predict(helpers.scale_scores(svd_recs[:, 2])).reshape(-1)
 
         # Merge and sort
         federated_recs = np.concatenate((lfm_recs, svd_recs), axis=0)
@@ -69,8 +76,9 @@ class Federator:
                                      federated_svd_recs[:, 2].astype(float),
                                      x=[federated_lfm_recs[:, 0].astype(int), federated_svd_recs[:, 0].astype(int)])
 
-        golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm, federated_recs, k=n)
-        golden_r_svd, predicted_r_svd = helpers.order_top_k_items(self.golden_svd, federated_recs, k=n)
+        golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm, federated_recs, self.log, k=n)
+        golden_r_svd, predicted_r_svd = helpers.order_top_k_items(self.golden_svd, federated_recs, self.log, k=n)
+
         print("LFM NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_lfm, golden_r_lfm, n)))
         print("SVD NDCG@%d Score: %.5f" % (n, ndcg_score(predicted_r_svd, golden_r_svd, n)))
 

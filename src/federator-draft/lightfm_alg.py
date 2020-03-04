@@ -38,6 +38,7 @@ class LightFMAlg:
         self.model = LightFM(learning_rate=learning_rate, loss=loss_type)
         self.model.fit(self.train, epochs=30, num_threads=2)
 
+    #  Prints the top n user rated items
     @staticmethod
     def print_known(user_id, known, num_known=5):
         print("User %d likes:" % (user_id+1))
@@ -48,6 +49,7 @@ class LightFMAlg:
                 print("User has no more favourites!")
                 break
 
+    #  Generates recs for LFM.
     def generate_rec(self, model, user_id, num_known=5, num_rec=10):
         user_id -= 1  # lfm is zero indexed
         n_users, n_items = self.train.shape
@@ -58,11 +60,30 @@ class LightFMAlg:
         scores = scores[np.argsort(-scores)]
 
         recs = []
-        if num_rec == -1:
-            num_rec = len(top_items)
+        num_rec_internal = num_rec
+        if num_rec_internal == -1:
+            num_rec_internal = len(top_items)
 
-        for i in range(num_rec):
-            recs.append([i+1, top_items[i], scores[i]])
+        # Since LFM sometimes recommends items the user has already rated, we strip this out so they are not recommended
+        current_i = 0
+        valid_recs = 0
+        while valid_recs < num_rec_internal:
+            # If num_recs = -1 or if it is greater than the number of valid recs, we simply return as many as there are
+            try:
+                current_item = top_items[current_i]
+                if current_item not in known_positives:
+                    recs.append([valid_recs + 1, current_item, scores[current_i]])
+                    valid_recs += 1
+                current_i += 1
+            except IndexError:
+                if num_rec == -1:
+                    self.log.info("All valid items retrieved!")
+                    break
+                else:
+                    self.log.warning("Number of recommendations out of bounds, only returning %d items. "
+                                     "Try lowering the number of recommendations desired in the future." % valid_recs)
+                    break
+
         self.print_known(user_id, known_positives, num_known=num_known)
         helpers.pretty_print_results(self.log, recs, user_id+1)
         return np.array(recs)
