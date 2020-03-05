@@ -5,3 +5,4 @@ SVD NDCG@20 Score: 0.93964
 are these too high? they map directly to the normalised golden list score. If more lfm items appear in the higher rankings it makes sense that it has a higher score.
 I think these results arent too meaningful, how to make them more meaningful? since we're essentially comparing the federated list with both golden lists.
 Should these scores be as similar as possible?
+Would precision/recall scores tell me anything for the mapped federator? should use for the individual splits one tho

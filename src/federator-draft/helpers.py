@@ -48,6 +48,11 @@ def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-lates
     return np.array([relevance_values]).astype(float), np.array([predicted[:, 2]]).astype(float)
 
 
+def pick_random(recs, n):
+    rand_indices = np.random.choice(recs.shape[0], n, replace=False)
+    return recs[rand_indices]
+
+
 def scale_scores(scores):
     min_max_scaler = MinMaxScaler()
     scaled_score = min_max_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
