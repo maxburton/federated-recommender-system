@@ -27,9 +27,10 @@ def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
 def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-latest-small/movies.csv"):
     title2id = generate_movietitle2id_mapper(filename=filename)
     golden_ids = {}
+    len_golden = len(golden)
 
     # Get all movie ids in the golden list, mapped to their golden ranking/score
-    for i in range(len(golden)):
+    for i in range(len_golden):
         golden_ids[title2id[golden[i][1]]] = golden[i]
     predicted = predicted[:k]
 
@@ -37,8 +38,10 @@ def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-lates
     relevance_values = []
     for title in predicted:
         try:
-            golden_score = golden_ids[title2id[title[1]]][2]  # aka relevance score
-            relevance_values.append(golden_score)
+            # golden_score = golden_ids[title2id[title[1]]][2]  # golden list score
+            # We use the position in the golden list's ranking as a relevance value, since scores are mostly similar
+            golden_rank = golden_ids[title2id[title[1]]][0] / float(len_golden)
+            relevance_values.append(golden_rank)
         except KeyError:
             log.warning("This item doesn't exist in the golden list, assigning score of 0")
             relevance_values.append(0)
