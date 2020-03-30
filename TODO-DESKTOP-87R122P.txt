@@ -7,31 +7,17 @@ X-Make the lightfm alg also output a score per recommendation
 X-Update lightfm algs (and future algs) to work with my input datasets
 
 X-Create new splitting formula that allows some movies to be shared between splits (emulates real life) (This might already be done in intermittent split)
-X-Create graph of federated results
-X-Update ndcg score to use the one from scikitlearn
-X-Experiment with different relevance values for ndcg
-X-Save svd to file to reduce runtime
-X-Check why theres a key error in golden list
-
-
-
-
-
-
-FINAL TODO:
-
-==Implementation== (in ranked order
--normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
--Potentially include tags/genres/implicit data in the mapper to improve it
+-Create graph of federated results
+-Update ndcg score to use the one from scikitlearn
+-Experiment with different relevance values for ndcg
 -Add other metrics as well as ndcg, for reporting purposes
+-Potentially use h20.ai to find better mapping models
+-Potentially include tags/genres/implicit data in the mapper to improve it
+-normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
+-Save svd to file to reduce runtime
+-Check why theres a key error in golden list
+-Save svd to file to reduce runtime
 -Try weighted recommender approach as well as mapped (should be more primitive than mapped)
 -Try switching recommender that simply picks the better recommender (should be more primitive than weighted)
--Look at slides on hybrid recommenders in the rec sys course, and use their papers for ideas or to cite as existing works
--Would different sized datasets be something to look at for method 1? could have that be weighted depending on size.
--Potentially use h20.ai to find better mapping models
 -If i have time: look into a pipelined recommender
-
-
-==Dissertation==
-Word2Vec and other embeddings for titles, to generate more implicit data. Can add this in the Future Work section.
-
+-Look at slides on hybrid recommenders in the rec sys course, and use their papers for ideas or to cite as existing works
