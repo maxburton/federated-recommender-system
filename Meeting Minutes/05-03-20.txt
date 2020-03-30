@@ -1,6 +1,6 @@
 another baseline option: interleave the results from the algs e.g. top 1 from svd, then top 1 from lfm, then top 2 from svd, etc.
 implement weighted combsum/ unweighted combsum as a baseline
-normalise the scores differently. (could try changing relevance values of golden list to be ranking * 1/number of recs so that its an even spacing between scores)
+X normalise the scores differently. (could try changing relevance values of golden list to be ranking * 1/number of recs so that its an even spacing between scores)
 More advanced to try to fit a curve on golden scores (if i have time)
 use precision/recall @k
 If theres a duplicate in the federated list, get max/min/avg, play around
