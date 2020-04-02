@@ -183,31 +183,4 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
     plt.ylabel(y_label)
     plt.tight_layout()
     plt.show()
-
-
-# DEPRECATED HELPERS:
-
-def get_relevant_values(recs, golden):
-    relevant_values = []
-    golden_movie_names = golden[:, 1]
-    from_name_to_rank = {k: v for v, k in enumerate(golden_movie_names, start=1)}
-    for rec in recs:
-        r_value = 0
-        rank, movie_name, _ = rec
-        if movie_name in golden_movie_names:
-            distance = abs(from_name_to_rank[movie_name] - int(rank))
-            r_value = 1 + 2/((len(golden_movie_names)/2) + distance/len(golden_movie_names)/2)
-        relevant_values.append(r_value)
-    return relevant_values
-
-
-def get_relevant_values_2(golden, predicted, k=10):
-    golden_arr = np.arange(1, k+1)
-    predicted_arr = np.full(k, k*3)
-    predicted_movie_names = predicted[:, 1]
-    for i in range(k):
-        title = golden[i][1]
-        predicted_rank = predicted[i][0]
-        if title in predicted_movie_names:
-            predicted_arr[i] = predicted_rank
-    return np.expand_dims(golden_arr, axis=0), np.expand_dims(predicted_arr, axis=0)
+    
