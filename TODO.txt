@@ -22,8 +22,11 @@ FINAL TODO:
 
 ==Implementation== (in ranked order
 -normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
+-run mapper on more data than the 1 split im using now
 -Potentially include tags/genres/implicit data in the mapper to improve it
 -Add other metrics as well as ndcg, for reporting purposes
+-Use different values of k in NDCG@k for reporting purposes
+-Try recommender that just weaves together items from each recommender (e.g. 1. lfm1 2. svd1 3. lfm2 4. svd2 etc)
 -Try weighted recommender approach as well as mapped (should be more primitive than mapped)
 -Try switching recommender that simply picks the better recommender (should be more primitive than weighted)
 -Look at slides on hybrid recommenders in the rec sys course, and use their papers for ideas or to cite as existing works

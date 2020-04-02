@@ -1,5 +1,6 @@
 # Custom
 /src/federator-draft/datasets/ml-20m/*
+/src/federator-draft/frs/*
 *.npy
 
 # Created by https://www.gitignore.io/api/python,pycharm,pycharm+all,pycharm+iml

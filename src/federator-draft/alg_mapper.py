@@ -1,19 +1,15 @@
 import logging.config
 import multiprocessing
 
-import pandas as pd
 import numpy as np
 
 import helpers
 from data_handler import DataHandler
 from definitions import ROOT_DIR
-from knn_user import KNNUser
 from lightfm_alg import LightFMAlg
 from surprise_svd import SurpriseSVD
 
-from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Lasso, Ridge, SGDRegressor
 
@@ -44,7 +40,8 @@ class AlgMapper:
         alg_warp = LightFMAlg("warp", ds=split_data)  # warp or bpr
         self.lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
 
-        svd = SurpriseSVD()
+        svd_train_split_filename = "/svd_train_split_{0}.npy".format(split_to_train)
+        svd = SurpriseSVD(ds=split_data, save_filename=svd_train_split_filename, load_filename=svd_train_split_filename)
         self.svd_recs = svd.get_top_n(user_id, n=-1)
 
     def remove_duplicates(self, array, col):

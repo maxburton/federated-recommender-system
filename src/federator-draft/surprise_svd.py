@@ -26,11 +26,12 @@ class SurpriseSVD:
         save_filename = ROOT_DIR + save_filename
         load_filename = ROOT_DIR + load_filename
         if load:
+            self.log.info("Attempting to load SVD file from storage...")
             try:
                 self.predictions = self.load_svd_from_file(load_filename)
                 return
             except FileNotFoundError:
-                self.log.warning("File doesn't exist! Generating SVD from scratch.")
+                self.log.info("File doesn't exist! Generating SVD from scratch.")
 
         algo = SVD()
         #results = cross_validate(algo, data, measures=['RMSE', 'MAE'])

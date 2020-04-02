@@ -1,5 +1,5 @@
 import itertools
-import os
+from sklearn.metrics import dcg_score
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
@@ -23,8 +23,12 @@ def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
     return pd.DataFrame(data=a[:, first_col:last_col], columns=['userId', 'movieId', 'rating'])
 
 
-# Returns the respective golden scores for the top k predicted items
-def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-latest-small/movies.csv"):
+""" 
+Returns the respective golden scores for the top k predicted items
+
+in_order will provide scores that sklearn's dcg method will take to rank the relevance values in the order provided
+"""
+def order_top_k_items(golden, predicted, log, k=10, in_order=False, filename="/datasets/ml-latest-small/movies.csv"):
     title2id = generate_movietitle2id_mapper(filename=filename)
     golden_ids = {}
     len_golden = len(golden)
@@ -36,19 +40,42 @@ def order_top_k_items(golden, predicted, log, k=10, filename="/datasets/ml-lates
 
     # for each predicted item, get its respective score from the golden list
     relevance_values = []
-    for title in predicted:
+    for prediction in predicted:
         try:
             # golden_score = golden_ids[title2id[title[1]]][2]  # golden list score
             # We use the position in the golden list's ranking as a relevance value, since scores are mostly similar
-            golden_rank = golden_ids[title2id[title[1]]][0] / float(len_golden)
-            relevance_values.append(golden_rank)
+            #golden_rank = 1 - float(golden_ids[title2id[title[1]]][0]) / len_golden
+            rank = float(golden_ids[title2id[prediction[1]]][0])
+            relevance_values.append(rank_scorer(rank, k=k))
         except KeyError:
             log.warning("This item doesn't exist in the golden list, assigning score of 0")
             relevance_values.append(0)
             continue
 
-    # Add another dimension to play nice with sklearn's ndcg
-    return np.array([relevance_values]).astype(float), np.array([predicted[:, 2]]).astype(float)
+    # (We add another dimension to play nice with sklearn's dcg method)
+    if in_order:
+        return np.array([relevance_values]).astype(float), np.array([range(k+1, 1, -1)])
+    else:
+        return np.array([relevance_values]).astype(float), np.array([predicted[:, 2]]).astype(float)
+
+
+def best_dcg_score(k=10):
+    relevance_values = []
+    for i in range(k):
+        relevance_values.append(rank_scorer(i, k=k))
+    scores = np.arange(1, k+1)
+    return dcg_score(np.array([relevance_values]).astype(float), np.array([scores]).astype(float), k=k)
+
+
+def rank_scorer(rank, k=10, var=None):
+    if rank < k // 5:
+        golden_rank = 2
+    elif rank < k:
+        golden_rank = 1
+    else:
+        golden_rank = 0
+
+    return golden_rank
 
 
 def pick_random(recs, n):

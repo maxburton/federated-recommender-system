@@ -17,9 +17,9 @@ class GoldenList:
     def generate_lists(self, user_id, data_path="/datasets/ml-latest-small", ds_ratings=None, min_rating=4.0,
                        num_of_recs=20, p_thresh=5, u_thresh=5, verbose=False):
 
-        self.log.info("KNN Golden List:")
-        golden_knn = KNNUser(user_id, data_path=data_path, p_thresh=p_thresh, u_thresh=u_thresh, ds_ratings=ds_ratings,
-                             min_rating=min_rating).make_recommendation(num_of_recs, verbose=verbose)
+        #self.log.info("KNN Golden List:")
+        #golden_knn = KNNUser(user_id, data_path=data_path, p_thresh=p_thresh, u_thresh=u_thresh, ds_ratings=ds_ratings,
+        #                     min_rating=min_rating).make_recommendation(num_of_recs, verbose=verbose)
 
         lfm_metric = "warp"  # warp or bpr
         self.log.info("LFM (%s) Golden List:" % lfm_metric)
@@ -30,7 +30,8 @@ class GoldenList:
         svd = SurpriseSVD()
         golden_svd = svd.get_top_n(user_id, n=num_of_recs)
 
-        return golden_knn, golden_lfm, golden_svd
+        #return golden_knn, golden_lfm, golden_svd
+        return golden_lfm, golden_svd
 
 
 if __name__ == '__main__':
