@@ -1,0 +1,42 @@
+ndcg: in evaluation section, put ndcg explanation, equations, value ranges, value outputs.
+appendix: put the extra ndcg stuff, if pages run out
+presentation: 
+-follow structure of intro, define problem and motivations. (1-2 slides)
+-explain design (theory behind it) (a slide with a figure showing data splits, and different rec systems, 3-4 minutes, what it is i'm doing, my goals?
+-evaluation (mention some implementation details e.g. surpise, lfm, python, etc. using datasets A, B, C, items in datasets, using metrics Y and Z. For more details read my diss.)
+-results
+
+-Explain the algorithms I've used and how they work in detail
+-Explain everything that I've done in detail
+-Look at the non implemented background work and trim it down if i don't actually use it, simply a small paragraph for each.
+-Everything is "future tense" in the sense that the project is already written and done, and how the background research actually effect this.
+
+-Rename method 1 and 2 to acronyms with some meaning. Put this in the intro section, in the problem formulation. And define these terms there.
+
+-Intro explains rec sys importance in general, and its problems, and why they help us. Rec sys in general
+-Motivation
+-Write problem formulation, what the project 
+-Contributions: implemented data splitting strategies, adapted strategies from IR
+-Final section explains the rest of the diss, e.g. section 2 does this, section 3 does this, etc
+
+-Background has 2 sections: what exists and I used, and what exists and how I improve on it or is related (maybe reverse the order)
+
+Design: explore why I chose certain design choices
+Design section should much longer than implementation
+
+Evaluation: 
+-Infrastructure, what software/hardware I used
+-Which datasets I used, and explain why I chose these
+-Metrics, and their explanations
+-Maybe methodology? if needed
+-Results, and their meaning/interpretation. Can include informed opinions, but ideally proof.
+-Discussion, higher level interpretations.
+
+Conclusion:
+-Summary of diss, and their results, bit more specific than abstract
+-If there is more contributions to discuss, can discuss here, e.g. which contributions are more important
+-Limitations: e.g. assumptions made (ethics approval for human testing). Each of these links to an item in future work
+-Future Work: Human testing, greater variety of algorithms, unrelated datasets.
+-Reflections: i.e. if I could go back in time what would I do differently. A lot of background learning involved. 
+
+Should probably ask for another extension

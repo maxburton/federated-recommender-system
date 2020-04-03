@@ -10,12 +10,23 @@ class LightFMAlg:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, loss_type, ds=None, labels=None, learning_rate=0.05, min_rating=4.0):
+    def __init__(self, loss_type, ds=None, labels=None, normalisation=None, learning_rate=0.05, min_rating=4.0):
         if ds is None:
             ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
             dh = DataHandler(filename=ds_path)
         else:
             dh = DataHandler(ds=ds)
+
+        # Normalise ratings
+        if normalisation:
+            normalised_ds = dh.get_dataset()
+            normalised_ds[:, 2] = normalisation(normalised_ds[:, 2])
+            dh.set_dataset(normalised_ds)
+
+            # convert min_rating to fit with normalised scores
+            lower = np.min(normalised_ds[:, 2])
+            upper = np.max(normalised_ds[:, 2])
+            min_rating = min_rating / (5 / upper - lower)
 
         self.labels = labels
         if labels is None:
@@ -29,7 +40,9 @@ class LightFMAlg:
 
         self.item_inv_mapper = helpers.generate_mapper(items)
         self.user_inv_map = helpers.generate_mapper(users)
-        self.labels = self.labels[:, 1][np.isin(self.labels[:, 0]-1, items)]  # remove labels that aren't present in dataset (-1 to zero index)
+
+        # remove labels that aren't present in dataset (-1 to zero index)
+        self.labels = self.labels[:, 1][np.isin(self.labels[:, 0]-1, items)]
 
         self.train = helpers.build_interaction_matrix(num_users, num_items, helpers.parse(train_raw), min_rating,
                                                       self.item_inv_mapper, self.user_inv_map)

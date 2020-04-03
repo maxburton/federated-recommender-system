@@ -10,8 +10,6 @@ import exceptions as ex
 class DataHandler:
     log = logging.getLogger(__name__)
 
-    dataset = []
-
     def __init__(self, filename=None, dtype=float, cols=1, ds=None, first_row_names=True):
         if filename:
             if first_row_names:

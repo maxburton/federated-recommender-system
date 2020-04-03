@@ -11,20 +11,28 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, save=True, load=True, save_filename="/svd.npy", load_filename="/svd.npy"):
+    def __init__(self, ds=None, normalisation=None, save=True, load=False, save_filename="/svd.npy", load_filename="/svd.npy"):
         # Create mapper from movie id to title
         self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
 
         # Read data from file (or ds)
-        reader = Reader(line_format='user item rating timestamp', sep=",", skip_lines=1)
         if ds is None:
-            self.data = Dataset.load_from_file(ROOT_DIR+"/datasets/ml-latest-small/ratings.csv", reader=reader)
+            df = pd.read_csv(ROOT_DIR+"/datasets/ml-latest-small/ratings.csv", usecols=[0, 1, 2])
         else:
-            reader = Reader(line_format='user item rating timestamp', sep=",")
-            self.data = Dataset.load_from_df(pd.DataFrame(ds[:, 0:3], columns=["user", "item", "rating"]), reader=reader)
+            df = pd.DataFrame(ds[:, 0:3], columns=["userId", "movieId", "rating"])
+        lower = np.min(df['rating'].to_numpy())
+        upper = np.max(df['rating'].to_numpy())
+
+        # Normalise ratings
+        if normalisation:
+            df['rating'] = normalisation(df['rating'])
+        reader = Reader(rating_scale=(lower, upper))
+        self.data = Dataset.load_from_df(df, reader=reader)
 
         save_filename = ROOT_DIR + save_filename
         load_filename = ROOT_DIR + load_filename
+
+        # Try to load existing SVD file from local storage (stored as an npy file)
         if load:
             self.log.info("Attempting to load SVD file from storage...")
             try:
@@ -33,17 +41,18 @@ class SurpriseSVD:
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating SVD from scratch.")
 
-        algo = SVD()
+        alg = SVD()
         #results = cross_validate(algo, data, measures=['RMSE', 'MAE'])
         #print(repr(results))
 
         trainset = self.data.build_full_trainset()
         testset = trainset.build_anti_testset()
 
-        algo.fit(trainset)
-        svd_array = np.array(algo.test(testset))
+        alg.fit(trainset)
+        svd_array = np.array(alg.test(testset))
         self.predictions = svd_array
 
+        # Save SVD file to local storage (as an npy file)
         if save:
             np.save(save_filename, svd_array)
 

@@ -44,18 +44,18 @@ class IndividualSplits:
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores
 
-    def run_on_splits_lfm(self, user_id, golden, num_of_recs=20, k=10):
+    def run_on_splits_lfm(self, user_id, golden, num_of_recs=20, k=10, norm_func=None):
         scores = []
         for i in range(len(self.split_dataset)):
-            alg_warp = LightFMAlg("warp", ds=self.split_dataset[i])  # warp or bpr
+            alg_warp = LightFMAlg("warp", ds=self.split_dataset[i], normalisation=norm_func)  # warp or bpr
             split_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=num_of_recs)
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores
 
-    def run_on_splits_svd(self, user_id, golden, num_of_recs=20, k=10):
+    def run_on_splits_svd(self, user_id, golden, num_of_recs=20, k=10, norm_func=None):
         scores = []
         for i in range(len(self.split_dataset)):
-            svd = SurpriseSVD(ds=self.split_dataset[i], save=False, load=False)
+            svd = SurpriseSVD(ds=self.split_dataset[i], normalisation=norm_func, save=False, load=False)
             split_recs = svd.get_top_n(user_id, n=num_of_recs)
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores

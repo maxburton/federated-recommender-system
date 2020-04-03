@@ -183,4 +183,49 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
     plt.ylabel(y_label)
     plt.tight_layout()
     plt.show()
-    
+
+
+"""
+Returns a normalised rating, penalised by the average ratings. Can produce negative ratings.
+Effective against users that rate consistently high or low
+"""
+def shifted_normalisation(ratings):
+    return ratings - np.mean(ratings)
+
+
+"""
+Returns a normalised rating, fit to a gaussian curve. Can produce negative ratings.
+Effective against users that rate very varied scores or very narrow scores
+"""
+def gaussian_normalisation(ratings):
+    return (ratings - np.mean(ratings)) / (np.sqrt(np.sum((ratings - np.mean(ratings))**2)))
+
+
+"""
+Returns a probability rating of whether or not the user will like an item based on their distribution of ratings
+
+e.g. if a user often rates items '4', then it loses its effect and the user probably doesn't particularly like this
+item. Equally, if the user has rated an item a '4' but there exists many items rated lower than or equal to
+'4', the user will probably like it.
+
+returns a float between 0 and 1.
+"""
+def decoupling_normalisation(ratings):
+    total_ratings = ratings.shape[0]
+    rating_probabilities = []
+    rating_lt_probabilities = []
+    for i in range(10):
+        # Get all ratings that are equal to the current rating
+        current_rating = 0.5 * (i+1)
+        rating_count = ratings[ratings == current_rating].shape[0]
+
+        # Find the probability distribution for each rating category
+        rating_probabilities.append(rating_count / total_ratings)
+
+        # Sum the current list of categories to find the probability distribution of being <= this rating category
+        rating_lt_probabilities.append(sum(rating_probabilities))
+
+    # convert rating into equivalent index
+    return np.array([rating_lt_probabilities[int(i*2 - 1)] - rating_probabilities[int(i*2 - 1)] / 2 for i in ratings])
+
+

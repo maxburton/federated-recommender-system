@@ -18,7 +18,7 @@ class AlgMapper:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, split_to_train=0):
+    def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, split_to_train=0, norm_func=None):
         if data_path is None:
             ds_base_path = "/datasets/ml-latest-small"
             ds_path = ROOT_DIR + ds_base_path + "/ratings.csv"
@@ -37,11 +37,11 @@ class AlgMapper:
         self.knn_recs = knnu.make_recommendation(num_of_recs=-1)  # -1 means get all available
         """
 
-        alg_warp = LightFMAlg("warp", ds=split_data)  # warp or bpr
+        alg_warp = LightFMAlg("warp", ds=split_data, normalisation=norm_func)  # warp or bpr
         self.lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
 
         svd_train_split_filename = "/svd_train_split_{0}.npy".format(split_to_train)
-        svd = SurpriseSVD(ds=split_data, save_filename=svd_train_split_filename, load_filename=svd_train_split_filename)
+        svd = SurpriseSVD(ds=split_data, normalisation=norm_func, save_filename=svd_train_split_filename, load_filename=svd_train_split_filename)
         self.svd_recs = svd.get_top_n(user_id, n=-1)
 
     def remove_duplicates(self, array, col):

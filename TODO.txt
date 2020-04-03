@@ -37,4 +37,4 @@ FINAL TODO:
 
 ==Dissertation==
 Word2Vec and other embeddings for titles, to generate more implicit data. Can add this in the Future Work section.
-
+Check effectiveness of different rating normalisations to see which one is best

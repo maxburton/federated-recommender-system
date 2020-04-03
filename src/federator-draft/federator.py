@@ -18,9 +18,9 @@ class Federator:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, user_id):
+    def __init__(self, user_id, norm_func=None):
         self.user_id = user_id
-        self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1)
+        self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1, norm_func=norm_func)
 
         # Normalise golden list scores
         #self.golden_knn[:, 2] = helpers.scale_scores(self.golden_knn[:, 2]).flatten()
@@ -30,10 +30,10 @@ class Federator:
         self.best_dcg_score = np.inf
 
     # TODO: Should probably remove or move this to a new class
-    def run_on_splits(self):
+    def run_on_splits(self, norm_func=None):
         #split_scores_knn = IndividualSplits().run_on_splits_knn(self.user_id, self.golden_knn)
-        split_scores_lfm = IndividualSplits().run_on_splits_lfm(self.user_id, self.golden_lfm)
-        split_scores_svd = IndividualSplits().run_on_splits_svd(self.user_id, self.golden_svd)
+        split_scores_lfm = IndividualSplits().run_on_splits_lfm(self.user_id, self.golden_lfm, norm_func=norm_func)
+        split_scores_svd = IndividualSplits().run_on_splits_svd(self.user_id, self.golden_svd, norm_func=norm_func)
 
     """
     Merges scores together based on their scores after mapping from one algorithm to the other
@@ -189,10 +189,10 @@ class Federator:
                                                                                  predicted_r_svd_rand_lfm,
                                                                                  n) / self.best_dcg_score))
 
-    def federate_results(self, n, reverse_mapping=False):
+    def federate_results(self, n, norm_func=None, reverse_mapping=False):
         # TODO: check performance difference between mapping svd to lfm AND lfm to svd
         # Normalise and map scores (default mapping is svd -> lfm)
-        mapper = AlgMapper(self.user_id, split_to_train=0)
+        mapper = AlgMapper(self.user_id, split_to_train=0, norm_func=norm_func)
         lfm, svd = mapper.normalise_and_trim()
         if not reverse_mapping:
             model = mapper.learn_mapping(svd, lfm)
@@ -204,13 +204,13 @@ class Federator:
         dataset = splits[split_to_predict]
 
         # Get LFM's recs
-        alg_warp = LightFMAlg("warp", ds=dataset)
+        alg_warp = LightFMAlg("warp", ds=dataset, normalisation=norm_func)
         lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
         lfm_recs = np.c_[lfm_recs, np.full(lfm_recs.shape[0], "lfm")]  # append new column of "lfm" to recs
 
         # Get Surprise's SVD recs
         svd_split_filename = "/svd_split_{0}.npy".format(split_to_predict)
-        svd = SurpriseSVD(ds=dataset, save_filename=svd_split_filename, load_filename=svd_split_filename)
+        svd = SurpriseSVD(ds=dataset, normalisation=norm_func, save_filename=svd_split_filename, load_filename=svd_split_filename)
         svd.print_user_favourites(self.user_id)
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
@@ -248,5 +248,6 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
     user_id = 5
-    fed = Federator(user_id)
-    fed.federate_results(50, reverse_mapping=False)
+    norm_func = helpers.gaussian_normalisation
+    fed = Federator(user_id, norm_func=norm_func)
+    fed.federate_results(50, reverse_mapping=False, norm_func=norm_func)
