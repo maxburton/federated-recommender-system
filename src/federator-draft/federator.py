@@ -193,11 +193,11 @@ class Federator:
         # TODO: check performance difference between mapping svd to lfm AND lfm to svd
         # Normalise and map scores (default mapping is svd -> lfm)
         mapper = AlgMapper(self.user_id, split_to_train=0, norm_func=norm_func)
-        lfm, svd = mapper.normalise_and_trim()
+        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
         if not reverse_mapping:
-            model = mapper.learn_mapping(svd, lfm)
+            model = mapper.learn_mapping(svd_normalised, lfm_normalised)
         else:
-            model = mapper.learn_mapping(lfm, svd)
+            model = mapper.learn_mapping(lfm_normalised, svd_normalised)
 
         splits = mapper.untrained_data
         split_to_predict = 0
@@ -248,6 +248,6 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
     user_id = 5
-    norm_func = helpers.gaussian_normalisation
+    norm_func = helpers.decoupling_normalisation
     fed = Federator(user_id, norm_func=norm_func)
     fed.federate_results(50, reverse_mapping=False, norm_func=norm_func)

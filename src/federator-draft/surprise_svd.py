@@ -25,7 +25,7 @@ class SurpriseSVD:
 
         # Normalise ratings
         if normalisation:
-            df['rating'] = normalisation(df['rating'])
+            df['rating'] = normalisation(df[['userId', 'rating']].to_numpy())
         reader = Reader(rating_scale=(lower, upper))
         self.data = Dataset.load_from_df(df, reader=reader)
 
@@ -41,20 +41,19 @@ class SurpriseSVD:
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating SVD from scratch.")
 
-        alg = SVD()
+        self.alg = SVD()
         #results = cross_validate(algo, data, measures=['RMSE', 'MAE'])
         #print(repr(results))
 
-        trainset = self.data.build_full_trainset()
-        testset = trainset.build_anti_testset()
+        self.trainset = self.data.build_full_trainset()
+        self.testset = self.trainset.build_anti_testset()
 
-        alg.fit(trainset)
-        svd_array = np.array(alg.test(testset))
-        self.predictions = svd_array
+        self.alg.fit(self.trainset)
+        self.predictions = np.array(self.alg.test(self.testset))
 
         # Save SVD file to local storage (as an npy file)
         if save:
-            np.save(save_filename, svd_array)
+            np.save(save_filename, self.predictions)
 
     def load_svd_from_file(self, filename):
         return np.load(filename, allow_pickle=True)
@@ -69,18 +68,16 @@ class SurpriseSVD:
             self.log.info("%s, %.1f" % (self.mid2title[int(rating[1])], float(rating[2])))
 
     def get_top_n(self, user_id, n=10, verbose=True):
-        """Return the top-N recommendation for each user from a set of predictions.
+        """Return the top-n recommendation for a user from a set of predictions.
 
         Args:
-            predictions(list of Prediction objects): The list of predictions, as
-                returned by the test method of an algorithm.
-            n(int): The number of recommendation to output for each user. Default
+            user_id(int): The user we are generating the recommendations for
+            n(int): The number of recommendation to output for the user. Default
                 is 10. -1 returns all available recommendations.
             verbose(bool): if True, prints the top n results
 
         Returns:
-        A dict where keys are user (raw) ids and values are lists of tuples:
-            [(raw item id, rating estimation), ...] of size n.
+        An np array, with recommendations in the form of [movieId, title, score]
         """
 
         # First map the predictions to the user.

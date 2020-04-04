@@ -1,11 +1,13 @@
 import itertools
 from sklearn.metrics import dcg_score
+import math
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
 from lightfm.data import Dataset
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
+from collections import defaultdict
 
 from definitions import ROOT_DIR
 
@@ -185,12 +187,75 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
     plt.show()
 
 
+"""From https://github.com/NicolasHug/Surprise/blob/master/examples/precision_recall_at_k.py
+
+Return precision and recall at k metrics for each user in the SVD alg.
 """
-Returns a normalised rating, penalised by the average ratings. Can produce negative ratings.
+def svd_precision_recall_at_k(predictions, k=10, threshold=3.5):
+
+    # First map the predictions to each user.
+    user_est_true = defaultdict(list)
+    for uid, _, true_r, est, _ in predictions:
+        user_est_true[uid].append((est, true_r))
+
+    precisions = dict()
+    recalls = dict()
+    for uid, user_ratings in user_est_true.items():
+
+        # Sort user ratings by estimated value
+        user_ratings.sort(key=lambda x: x[0], reverse=True)
+
+        # Number of relevant items
+        n_rel = sum((true_r >= threshold) for (_, true_r) in user_ratings)
+
+        # Number of recommended items in top k
+        n_rec_k = sum((est >= threshold) for (est, _) in user_ratings[:k])
+
+        # Number of relevant and recommended items in top k
+        n_rel_and_rec_k = sum(((true_r >= threshold) and (est >= threshold))
+                              for (est, true_r) in user_ratings[:k])
+
+        # Precision@K: Proportion of recommended items that are relevant
+        precisions[uid] = n_rel_and_rec_k / n_rec_k if n_rec_k != 0 else 1
+
+        # Recall@K: Proportion of relevant items that are recommended
+        recalls[uid] = n_rel_and_rec_k / n_rel if n_rel != 0 else 1
+
+    return precisions, recalls
+
+
+"""
+Return a dictionary with every user id and their mean rating across all their ratings in a dataset
+"""
+def get_avg_user_ratings(ratings, variance=False):
+    user_ids = ratings[:, 0]
+    user_ratings = ratings[:, 1]
+    avg_user_ratings = {}
+    user_variances = {}
+    unique_user_ids = np.unique(user_ids)
+    for user_id in unique_user_ids:
+        avg_user_rating = np.mean(user_ratings[user_ids == user_id])
+        avg_user_ratings[user_id] = avg_user_rating
+        if variance:
+            user_variance = math.sqrt(np.sum((user_ratings[user_ids == user_id] - avg_user_rating)**2))
+            if user_variance != 0:
+                user_variances[user_id] = user_variance
+            else:
+                user_variances[user_id] = 1.0
+    return user_ids, user_ratings, avg_user_ratings, user_variances
+
+
+"""
+Returns a normalised rating, penalised by the average ratings of each user. Can produce negative ratings.
 Effective against users that rate consistently high or low
 """
 def shifted_normalisation(ratings):
-    return ratings - np.mean(ratings)
+    # Get each user's average rating
+    user_ids, user_ratings, avg_user_ratings, _ = get_avg_user_ratings(ratings)
+
+    normalised_ratings = np.array([user_ratings[i] - avg_user_ratings[user_ids[i]] for i in range(ratings.shape[0])])
+    scaled_normalised_ratings = MinMaxScaler(feature_range=(0, 5)).fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
+    return scaled_normalised_ratings
 
 
 """
@@ -198,7 +263,13 @@ Returns a normalised rating, fit to a gaussian curve. Can produce negative ratin
 Effective against users that rate very varied scores or very narrow scores
 """
 def gaussian_normalisation(ratings):
-    return (ratings - np.mean(ratings)) / (np.sqrt(np.sum((ratings - np.mean(ratings))**2)))
+    user_ids, user_ratings, avg_user_ratings, user_variance = get_avg_user_ratings(ratings, variance=True)
+
+    normalised_ratings = np.array([(user_ratings[i] - avg_user_ratings[user_ids[i]]) / user_variance[user_ids[i]]
+                                   for i in range(ratings.shape[0])])
+
+    scaled_normalised_ratings = RobustScaler().fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
+    return scaled_normalised_ratings
 
 
 """
@@ -211,21 +282,36 @@ item. Equally, if the user has rated an item a '4' but there exists many items r
 returns a float between 0 and 1.
 """
 def decoupling_normalisation(ratings):
-    total_ratings = ratings.shape[0]
-    rating_probabilities = []
-    rating_lt_probabilities = []
-    for i in range(10):
-        # Get all ratings that are equal to the current rating
-        current_rating = 0.5 * (i+1)
-        rating_count = ratings[ratings == current_rating].shape[0]
+    user_ids = ratings[:, 0]
+    user_ratings = ratings[:, 1]
+    unique_user_ids = np.unique(user_ids)
 
-        # Find the probability distribution for each rating category
-        rating_probabilities.append(rating_count / total_ratings)
+    user_probabilities = {}
+    user_lt_probabilities = {}
 
-        # Sum the current list of categories to find the probability distribution of being <= this rating category
-        rating_lt_probabilities.append(sum(rating_probabilities))
+    for user_id in unique_user_ids:
+        rating_probabilities = []
+        rating_lt_probabilities = []
+        users_ratings = user_ratings[user_ids == user_id]
+        total_ratings = users_ratings.shape[0]
+
+        for i in range(10):
+            # Get all ratings that are equal to the current rating
+            current_rating = 0.5 * (i+1)
+            rating_count = users_ratings[users_ratings == current_rating].shape[0]
+
+            # Find the probability distribution for each rating category
+            rating_probabilities.append(rating_count / total_ratings)
+
+            # Sum the current list of categories to find the probability distribution of being <= this rating category
+            rating_lt_probabilities.append(sum(rating_probabilities))
+        user_probabilities[user_id] = rating_probabilities
+        user_lt_probabilities[user_id] = rating_lt_probabilities
 
     # convert rating into equivalent index
-    return np.array([rating_lt_probabilities[int(i*2 - 1)] - rating_probabilities[int(i*2 - 1)] / 2 for i in ratings])
-
+    normalised_ratings = np.array([user_lt_probabilities[user_ids[i]][int(user_ratings[i]*2 - 1)] -
+                                   user_probabilities[user_ids[i]][int(user_ratings[i]*2 - 1)]/2
+                                   for i in range(ratings.shape[0])])
+    scaled_normalised_ratings = RobustScaler().fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
+    return scaled_normalised_ratings
 

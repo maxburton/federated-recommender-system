@@ -20,7 +20,7 @@ class LightFMAlg:
         # Normalise ratings
         if normalisation:
             normalised_ds = dh.get_dataset()
-            normalised_ds[:, 2] = normalisation(normalised_ds[:, 2])
+            normalised_ds[:, 2] = normalisation(normalised_ds[:, [0, 2]])
             dh.set_dataset(normalised_ds)
 
             # convert min_rating to fit with normalised scores
