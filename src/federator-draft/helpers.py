@@ -191,7 +191,7 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
 
 Return precision and recall at k metrics for each user in the SVD alg.
 """
-def svd_precision_recall_at_k(predictions, k=10, threshold=4.7):
+def svd_precision_recall_at_k(predictions, k=10, threshold=4.65):
 
     # First map the predictions to each user.
     user_est_true = defaultdict(list)

@@ -3,6 +3,7 @@ from lightfm_alg import LightFMAlg
 from data_handler import DataHandler
 from definitions import ROOT_DIR
 import helpers
+import matplotlib.pyplot as plt
 
 import logging.config
 import numpy as np
@@ -25,9 +26,12 @@ class TestAlgorithmMetrics:
         lfm_results = []
         svd_results = []
         x = np.arange(n_subsets)
+        labels = []
+        width = 0.35
 
         for i in x:
             split_dataset = data.split_dataset_intermittently(i+1)
+            labels.append(100 // (i+1))
 
             lfm = LightFMAlg("warp", ds=split_dataset[0], normalisation=norm_func)
             all_user_precisions = precision_at_k(lfm.model, lfm.train, k=k)
@@ -41,10 +45,16 @@ class TestAlgorithmMetrics:
             svd_results.append(precision_svd)
             log.info("SVD: %.5f" % precision_svd)
 
-        title = "Precision@%d for LFM and SVD running on datasets of decreasing size" % k
-        x_label = "Dataset size"
-        y_label = "Precision@k Score"
-        helpers.create_scatter_graph(title, x_label, y_label, ["LFM", "SVD"], ["red", "blue"], lfm_results, svd_results)
+        plt.title("Precision@{0} for LFM and SVD Running on Various Dataset Sizes".format(k))
+        plt.xlabel("Dataset Size (in 1000s of Ratings)")
+        plt.ylabel("Precision@{0} Score".format(k))
+        plt.xticks(ticks=x, labels=labels)
+        plt.bar(x, lfm_results, width=width, label="LFM")
+        plt.bar(x + width, svd_results, width=width, label="SVD")
+        plt.legend()
+        plt.savefig("initial_precision.pdf", format("pdf"))
+        plt.show()
+
 
 if __name__ == '__main__':
     norm_func = None
