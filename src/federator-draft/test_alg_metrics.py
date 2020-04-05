@@ -11,12 +11,11 @@ from lightfm.evaluation import precision_at_k
 
 
 class TestAlgorithmMetrics:
-    def __init__(self, norm_func=None):
+    def __init__(self, norm_func=None, labels_ds=None):
         logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
         log = logging.getLogger(__name__)
 
         movie_id_col = 1
-        n_subsets = 10
         k = 10
 
         ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
@@ -25,15 +24,16 @@ class TestAlgorithmMetrics:
 
         lfm_results = []
         svd_results = []
-        x = np.arange(n_subsets)
+        x = [1, 2, 3, 4, 5, 10]
+        x_range = np.arange(1, len(x)+1)
         labels = []
         width = 0.35
 
         for i in x:
-            split_dataset = data.split_dataset_intermittently(i+1)
-            labels.append(100 // (i+1))
+            split_dataset = data.split_dataset_intermittently(i)
+            labels.append(100 // i)
 
-            lfm = LightFMAlg("warp", ds=split_dataset[0], normalisation=norm_func)
+            lfm = LightFMAlg("warp", ds=split_dataset[0], labels_ds=labels_ds, normalisation=norm_func)
             all_user_precisions = precision_at_k(lfm.model, lfm.train, k=k)
             precision_lfm = sum(all_user_precisions) / len(all_user_precisions)
             lfm_results.append(precision_lfm)
@@ -48,11 +48,11 @@ class TestAlgorithmMetrics:
         plt.title("Precision@{0} for LFM and SVD Running on Various Dataset Sizes".format(k))
         plt.xlabel("Dataset Size (in 1000s of Ratings)")
         plt.ylabel("Precision@{0} Score".format(k))
-        plt.xticks(ticks=x, labels=labels)
-        plt.bar(x, lfm_results, width=width, label="LFM")
-        plt.bar(x + width, svd_results, width=width, label="SVD")
+        plt.xticks(ticks=x_range, labels=labels)
+        plt.bar(x_range, lfm_results, width=width, label="LFM")
+        plt.bar(np.array(x_range) + width, svd_results, width=width, label="SVD")
         plt.legend()
-        plt.savefig("initial_precision.pdf", format("pdf"))
+        plt.savefig("initial_precision.pdf", format="pdf")
         plt.show()
 
 

@@ -18,9 +18,13 @@ class Federator:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, user_id, norm_func=None):
+    def __init__(self, user_id, data_path=None, labels_ds=None, norm_func=None):
         self.user_id = user_id
-        self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, num_of_recs=-1, norm_func=norm_func)
+        self.data_path = data_path
+        self.labels_ds = labels_ds
+        self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, data_path=self.data_path,
+                                                                       labels_ds=labels_ds, num_of_recs=-1,
+                                                                       norm_func=norm_func)
 
         # Normalise golden list scores
         #self.golden_knn[:, 2] = helpers.scale_scores(self.golden_knn[:, 2]).flatten()
@@ -192,7 +196,7 @@ class Federator:
     def federate_results(self, n, norm_func=None, reverse_mapping=False):
         # TODO: check performance difference between mapping svd to lfm AND lfm to svd
         # Normalise and map scores (default mapping is svd -> lfm)
-        mapper = AlgMapper(self.user_id, split_to_train=0, norm_func=norm_func)
+        mapper = AlgMapper(self.user_id, data_path=self.data_path, split_to_train=0, norm_func=norm_func)
         lfm_normalised, svd_normalised = mapper.normalise_and_trim()
         if not reverse_mapping:
             model = mapper.learn_mapping(svd_normalised, lfm_normalised)
@@ -204,7 +208,7 @@ class Federator:
         dataset = splits[split_to_predict]
 
         # Get LFM's recs
-        alg_warp = LightFMAlg("warp", ds=dataset, normalisation=norm_func)
+        alg_warp = LightFMAlg("warp", ds=dataset, labels_ds=self.labels_ds, normalisation=norm_func)
         lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
         lfm_recs = np.c_[lfm_recs, np.full(lfm_recs.shape[0], "lfm")]  # append new column of "lfm" to recs
 
@@ -248,6 +252,7 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
     user_id = 5
-    norm_func = helpers.decoupling_normalisation
-    fed = Federator(user_id, norm_func=norm_func)
+    norm_func = None
+    fed = Federator(user_id, data_path="/datasets/ml-25m/ratings.csv", labels_ds="/datasets/ml-25m/movies.csv",
+                    norm_func=norm_func)
     fed.federate_results(50, reverse_mapping=False, norm_func=norm_func)

@@ -1,7 +1,11 @@
-# Custom
-/src/federator-draft/datasets/ml-20m/*
+# Ignore:
+/src/federator-draft/datasets/*
 /src/federator-draft/frs/*
 *.npy
+
+# Except:
+!/src/federator-draft/datasets/ml-latest-small/
+
 
 # Created by https://www.gitignore.io/api/python,pycharm,pycharm+all,pycharm+iml
 # Edit at https://www.gitignore.io/?templates=python,pycharm,pycharm+all,pycharm+iml

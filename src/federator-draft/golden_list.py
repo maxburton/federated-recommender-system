@@ -19,22 +19,21 @@ class GoldenList:
     
     lfm_metric: can be "warp" or "bpr"
     """
-    def generate_lists(self, user_id, data_path="/datasets/ml-latest-small", ds_ratings=None, min_rating=4.0,
-                       num_of_recs=20, p_thresh=5, u_thresh=5, verbose=False, lfm_metric="warp", norm_func=None):
+    def generate_lists(self, user_id, data_path=None, labels_ds=None, ds_ratings=None, min_rating=4.0, num_of_recs=20,
+                       p_thresh=5, u_thresh=5, verbose=False, lfm_metric="warp", norm_func=None):
 
         #self.log.info("KNN Golden List:")
         #golden_knn = KNNUser(user_id, data_path=data_path, p_thresh=p_thresh, u_thresh=u_thresh, ds_ratings=ds_ratings,
         #                     min_rating=min_rating).make_recommendation(num_of_recs, verbose=verbose)
 
         self.log.info("LFM (%s) Golden List:" % lfm_metric)
-        lfm_model = LightFMAlg(lfm_metric, normalisation=norm_func)
+        lfm_model = LightFMAlg(lfm_metric, ds=data_path, labels_ds=labels_ds, normalisation=norm_func)
         golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=num_of_recs)
 
         self.log.info("SVD Golden List:")
-        svd = SurpriseSVD(normalisation=norm_func)
+        svd = SurpriseSVD(normalisation=norm_func, ds=data_path)
         golden_svd = svd.get_top_n(user_id, n=num_of_recs)
 
-        #return golden_knn, golden_lfm, golden_svd
         return golden_lfm, golden_svd
 
 

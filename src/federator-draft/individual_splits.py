@@ -19,10 +19,10 @@ class IndividualSplits:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, n_subsets=5, movie_id_col=1, data_path=None):
+    def __init__(self, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None):
+        self.labels_ds = labels_ds
         if data_path is None:
-            ds_base_path = "/datasets/ml-latest-small"
-            ds_path = ROOT_DIR + ds_base_path + "/ratings.csv"
+            ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
         else:
             ds_path = ROOT_DIR + data_path
 
@@ -30,6 +30,7 @@ class IndividualSplits:
         data.set_dataset(data.sort_dataset_by_col(movie_id_col))
         self.split_dataset = data.split_dataset_intermittently(n_subsets)
 
+    #TODO: Change this to new ndcg score
     def get_ndcg_score(self, golden, split_recs, k=10):
         golden_r, predicted_r = helpers.get_relevant_values_2(split_recs, golden, k=k)
         return ndcg_score(golden_r, predicted_r, k)
@@ -47,7 +48,7 @@ class IndividualSplits:
     def run_on_splits_lfm(self, user_id, golden, num_of_recs=20, k=10, norm_func=None):
         scores = []
         for i in range(len(self.split_dataset)):
-            alg_warp = LightFMAlg("warp", ds=self.split_dataset[i], normalisation=norm_func)  # warp or bpr
+            alg_warp = LightFMAlg("warp", ds=self.split_dataset[i], labels_ds=self.labels_ds, normalisation=norm_func)
             split_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=num_of_recs)
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)
         return scores

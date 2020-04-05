@@ -18,6 +18,8 @@ class SurpriseSVD:
         # Read data from file (or ds)
         if ds is None:
             df = pd.read_csv(ROOT_DIR+"/datasets/ml-latest-small/ratings.csv", usecols=[0, 1, 2])
+        elif type(ds) is str:
+            df = pd.read_csv(ROOT_DIR + ds, usecols=[0, 1, 2])
         else:
             df = pd.DataFrame(ds[:, 0:3], columns=["userId", "movieId", "rating"])
         lower = np.min(df['rating'].to_numpy())

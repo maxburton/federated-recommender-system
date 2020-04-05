@@ -10,9 +10,13 @@ class LightFMAlg:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, loss_type, ds=None, labels=None, normalisation=None, learning_rate=0.05, min_rating=4.0):
+    def __init__(self, loss_type, ds=None, labels=None, labels_ds=None,
+                 normalisation=None, learning_rate=0.05, min_rating=4.0):
         if ds is None:
             ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
+            dh = DataHandler(filename=ds_path)
+        elif type(ds) is str:
+            ds_path = ROOT_DIR + ds
             dh = DataHandler(filename=ds_path)
         else:
             dh = DataHandler(ds=ds)
@@ -30,7 +34,10 @@ class LightFMAlg:
 
         self.labels = labels
         if labels is None:
-            ds_path = ROOT_DIR + "/datasets/ml-latest-small/movies.csv"
+            if labels_ds is None:
+                ds_path = ROOT_DIR + "/datasets/ml-latest-small/movies.csv"
+            else:
+                ds_path = ROOT_DIR + labels_ds
             self.labels = DataHandler(filename=ds_path).get_dataset()[:, 0:2]
 
         train_raw, test_raw = dh.split_dataset_by_ratio([0.8, 0.2])
