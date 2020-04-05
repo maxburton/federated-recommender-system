@@ -191,7 +191,7 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
 
 Return precision and recall at k metrics for each user in the SVD alg.
 """
-def svd_precision_recall_at_k(predictions, k=10, threshold=3.5):
+def svd_precision_recall_at_k(predictions, k=10, threshold=4.7):
 
     # First map the predictions to each user.
     user_est_true = defaultdict(list)
@@ -216,7 +216,7 @@ def svd_precision_recall_at_k(predictions, k=10, threshold=3.5):
                               for (est, true_r) in user_ratings[:k])
 
         # Precision@K: Proportion of recommended items that are relevant
-        precisions[uid] = n_rel_and_rec_k / n_rec_k if n_rec_k != 0 else 1
+        precisions[uid] = n_rec_k / k
 
         # Recall@K: Proportion of relevant items that are recommended
         recalls[uid] = n_rel_and_rec_k / n_rel if n_rel != 0 else 1
