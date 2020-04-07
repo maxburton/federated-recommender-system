@@ -3,10 +3,10 @@ from sklearn.metrics import dcg_score
 from definitions import ROOT_DIR
 import logging.config
 from golden_list import GoldenList
-from individual_splits import IndividualSplits
 from alg_mapper import AlgMapper
 from surprise_svd import SurpriseSVD
 from lightfm_alg import LightFMAlg
+from data_handler import DataHandler
 import numpy as np
 import copy
 import helpers
@@ -14,30 +14,39 @@ import helpers
 import multiprocessing
 
 
-class Federator:
+class FederatorMapper:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, user_id, data_path=None, labels_ds=None, norm_func=None):
+    def __init__(self, user_id, data_path=None, labels_ds=None, norm_func=None, reverse_mapping=False):
         self.user_id = user_id
         self.data_path = data_path
         self.labels_ds = labels_ds
-        self.golden_lfm, self.golden_svd = GoldenList().generate_lists(self.user_id, data_path=self.data_path,
-                                                                       labels_ds=labels_ds, num_of_recs=-1,
-                                                                       norm_func=norm_func)
+        self.norm_func = norm_func
+
+        # Get mapping model (default mapping is svd -> lfm)
+        mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
+        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
+        if not reverse_mapping:
+            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
+        else:
+            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
+
+        splits = mapper.untrained_data
+        self.dataset = np.vstack(splits)
+
+        # Golden list for mapping method
+        self.golden_lfm_mapper, self.golden_svd_mapper = GoldenList().generate_lists(self.user_id,
+                                                                                     data_path=self.dataset,
+                                                                                     labels_ds=self.labels_ds,
+                                                                                     num_of_recs=-1,
+                                                                                     norm_func=self.norm_func)
 
         # Normalise golden list scores
-        #self.golden_knn[:, 2] = helpers.scale_scores(self.golden_knn[:, 2]).flatten()
-        self.golden_lfm[:, 2] = helpers.scale_scores(self.golden_lfm[:, 2]).flatten()
-        self.golden_svd[:, 2] = helpers.scale_scores(self.golden_svd[:, 2]).flatten()
+        self.golden_lfm_mapper[:, 2] = helpers.scale_scores(self.golden_lfm_mapper[:, 2]).flatten()
+        self.golden_svd_mapper[:, 2] = helpers.scale_scores(self.golden_svd_mapper[:, 2]).flatten()
 
         self.best_dcg_score = np.inf
-
-    # TODO: Should probably remove or move this to a new class
-    def run_on_splits(self, norm_func=None):
-        #split_scores_knn = IndividualSplits().run_on_splits_knn(self.user_id, self.golden_knn)
-        split_scores_lfm = IndividualSplits().run_on_splits_lfm(self.user_id, self.golden_lfm, norm_func=norm_func)
-        split_scores_svd = IndividualSplits().run_on_splits_svd(self.user_id, self.golden_svd, norm_func=norm_func)
 
     """
     Merges scores together based on their scores after mapping from one algorithm to the other
@@ -63,8 +72,8 @@ class Federator:
                                         federated_svd_recs_truncated[:, 0].astype(int)])
 
         # Federated ndcg score
-        golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm, federated_recs, self.log, k=n)
-        golden_r_svd, predicted_r_svd = helpers.order_top_k_items(self.golden_svd, federated_recs, self.log, k=n)
+        golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm_mapper, federated_recs, self.log, k=n)
+        golden_r_svd, predicted_r_svd = helpers.order_top_k_items(self.golden_svd_mapper, federated_recs, self.log, k=n)
 
         # We divide by the best possible dcg score to calculate the normalised dcg score
         ndcg_score_lfm = dcg_score(golden_r_lfm, predicted_r_lfm, n) / self.best_dcg_score
@@ -90,11 +99,11 @@ class Federator:
             weaved_recs.append(lfm_unmapped[i])
             if i*2 <= n:  # For odd n, will not append this for the final loop
                 weaved_recs.append(svd_unmapped[i+1])
-        weave_b_golden_r_lfm, weave_b_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm,
+        weave_b_golden_r_lfm, weave_b_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm_mapper,
                                                                                   helpers.pick_random(
                                                                                       np.array(weaved_recs), n),
                                                                                   self.log, k=n, in_order=True)
-        weave_b_golden_r_svd, weave_b_predicted_r_svd = helpers.order_top_k_items(self.golden_svd,
+        weave_b_golden_r_svd, weave_b_predicted_r_svd = helpers.order_top_k_items(self.golden_svd_mapper,
                                                                                   helpers.pick_random(
                                                                                       np.array(weaved_recs), n),
                                                                                   self.log, k=n, in_order=True)
@@ -124,11 +133,11 @@ class Federator:
             weaved_recs.append(top_alg[i])
             if i*2 <= n:  # For odd n, will not append this for the final loop
                 weaved_recs.append(other_alg[i+1])
-        weave_b_golden_r_lfm, weave_b_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm,
+        weave_b_golden_r_lfm, weave_b_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm_mapper,
                                                                                   helpers.pick_random(
                                                                                       np.array(weaved_recs), n),
                                                                                   self.log, k=n, in_order=True)
-        weave_b_golden_r_svd, weave_b_predicted_r_svd = helpers.order_top_k_items(self.golden_svd,
+        weave_b_golden_r_svd, weave_b_predicted_r_svd = helpers.order_top_k_items(self.golden_svd_mapper,
                                                                                   helpers.pick_random(
                                                                                       np.array(weaved_recs), n),
                                                                                   self.log, k=n, in_order=True)
@@ -143,10 +152,10 @@ class Federator:
     """
     def pick_random_baseline(self, federated_recs, n=10):
         # Pick random recs from the federated recs, to show the importance of the mapper
-        rand_golden_r_lfm, rand_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm,
+        rand_golden_r_lfm, rand_predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm_mapper,
                                                                             helpers.pick_random(federated_recs, n),
                                                                             self.log, k=n, in_order=True)
-        rand_golden_r_svd, rand_predicted_r_svd = helpers.order_top_k_items(self.golden_svd,
+        rand_golden_r_svd, rand_predicted_r_svd = helpers.order_top_k_items(self.golden_svd_mapper,
                                                                             helpers.pick_random(federated_recs, n),
                                                                             self.log, k=n, in_order=True)
 
@@ -179,10 +188,10 @@ class Federator:
         lfm_with_random_svd = np.concatenate((federated_lfm_recs, random_svd_recs), axis=0)
         lfm_with_random_svd = lfm_with_random_svd[np.argsort(lfm_with_random_svd[:, 2])][::-1]
 
-        golden_r_lfm_rand_svd, predicted_r_lfm_rand_svd = helpers.order_top_k_items(self.golden_lfm,
+        golden_r_lfm_rand_svd, predicted_r_lfm_rand_svd = helpers.order_top_k_items(self.golden_lfm_mapper,
                                                                                     lfm_with_random_svd, self.log, k=n,
                                                                                     in_order=True)
-        golden_r_svd_rand_lfm, predicted_r_svd_rand_lfm = helpers.order_top_k_items(self.golden_svd,
+        golden_r_svd_rand_lfm, predicted_r_svd_rand_lfm = helpers.order_top_k_items(self.golden_svd_mapper,
                                                                                     svd_with_random_lfm, self.log, k=n,
                                                                                     in_order=True)
 
@@ -193,28 +202,18 @@ class Federator:
                                                                                  predicted_r_svd_rand_lfm,
                                                                                  n) / self.best_dcg_score))
 
-    def federate_results(self, n, norm_func=None, reverse_mapping=False):
+    def federate_results(self, n, reverse_mapping=False):
         # TODO: check performance difference between mapping svd to lfm AND lfm to svd
-        # Normalise and map scores (default mapping is svd -> lfm)
-        mapper = AlgMapper(self.user_id, data_path=self.data_path, split_to_train=0, norm_func=norm_func)
-        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
-        if not reverse_mapping:
-            model = mapper.learn_mapping(svd_normalised, lfm_normalised)
-        else:
-            model = mapper.learn_mapping(lfm_normalised, svd_normalised)
-
-        splits = mapper.untrained_data
-        split_to_predict = 0
-        dataset = splits[split_to_predict]
 
         # Get LFM's recs
-        alg_warp = LightFMAlg("warp", ds=dataset, labels_ds=self.labels_ds, normalisation=norm_func)
+        alg_warp = LightFMAlg("warp", ds=self.dataset, labels_ds=self.labels_ds, normalisation=self.norm_func)
         lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
         lfm_recs = np.c_[lfm_recs, np.full(lfm_recs.shape[0], "lfm")]  # append new column of "lfm" to recs
 
         # Get Surprise's SVD recs
-        svd_split_filename = "/svd_split_{0}.npy".format(split_to_predict)
-        svd = SurpriseSVD(ds=dataset, normalisation=norm_func, save_filename=svd_split_filename, load_filename=svd_split_filename)
+        svd_split_filename = "/svd_split.npy".format()
+        svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func, save_filename=svd_split_filename,
+                          load_filename=svd_split_filename)
         svd.print_user_favourites(self.user_id)
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
@@ -228,10 +227,10 @@ class Federator:
         # Scale scores and map one to another (reshape to convert back to 1d row array)
         if not reverse_mapping:
             lfm_recs[:, 2] = lfm_recs_unmapped[:, 2].reshape(-1)
-            svd_recs[:, 2] = model.predict(helpers.scale_scores(svd_recs[:, 2])).reshape(-1)
+            svd_recs[:, 2] = self.model.predict(helpers.scale_scores(svd_recs[:, 2])).reshape(-1)
         else:
             svd_recs[:, 2] = svd_recs_unmapped[:, 2].reshape(-1)
-            lfm_recs[:, 2] = model.predict(helpers.scale_scores(lfm_recs[:, 2])).reshape(-1)
+            lfm_recs[:, 2] = self.model.predict(helpers.scale_scores(lfm_recs[:, 2])).reshape(-1)
 
         # Get the maximum possible dcg score, if the rankings were to be perfectly ranked
         self.best_dcg_score = helpers.best_dcg_score(n)
@@ -251,8 +250,17 @@ if __name__ == '__main__':
     # Allows n_jobs to be > 1
     multiprocessing.set_start_method('spawn')
 
-    user_id = 5
     norm_func = None
-    fed = Federator(user_id, data_path="/datasets/ml-25m/ratings.csv", labels_ds="/datasets/ml-25m/movies.csv",
+    ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
+    dh = DataHandler(filename=ds_path)
+
+    # Filter out users and items below threshold
+    dh, surviving_users = helpers.remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0)
+
+    # Get users who have at least rated at least min_ratings movies
+    min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
+    user_id = np.min(min_ratings_users.index.astype(int))
+    user_id = 5
+    fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-latest-small/movies.csv",
                     norm_func=norm_func)
-    fed.federate_results(50, reverse_mapping=False, norm_func=norm_func)
+    fed.federate_results(50, reverse_mapping=False)

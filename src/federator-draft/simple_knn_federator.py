@@ -36,7 +36,7 @@ class SimpleKNNFederator:
     def knn_split_datasets(self, split_datasets, user_id, num_of_recs=20):
         split_recommendations = []
         for i in range(len(split_datasets)):
-            knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, split_datasets[i]),
+            knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(split_datasets[i]),
                            p_thresh=0, u_thresh=0)
             split_recommendations.append(knnu.make_recommendation(num_of_recs=num_of_recs))
         a = np.concatenate(split_recommendations)

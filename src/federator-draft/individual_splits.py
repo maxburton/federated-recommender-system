@@ -39,7 +39,7 @@ class IndividualSplits:
     def run_on_splits_knn(self, user_id, golden, num_of_recs=20, k=10):
         scores = []
         for i in range(len(self.split_dataset)):
-            knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, self.split_dataset[i]),
+            knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(self.split_dataset[i]),
                            p_thresh=0, u_thresh=0)
             split_recs = knnu.make_recommendation(num_of_recs=num_of_recs)
             scores.append(self.get_ndcg_score(split_recs, golden, k=k))  # (NDCG@k)

@@ -252,3 +252,56 @@
 
 ## 4 Mar 2020
 * *2 hours* Fixing ndcg score function
+
+## 6 Mar 2020
+* *2 hours* Continued writing diss (background)
+
+## 9 Mar 2020
+* *1 hour* Meeting with nikos
+* *3 hours* Implementing relevance values for ndcg
+
+## Week 25
+
+## 23 Mar 2020
+* *3 hours* Light background research for diss while recovering
+
+## Week 26
+
+## 28 Mar 2020
+* *5 hours* diss work (background)
+
+## 29 Mar 2020
+* *3 hours* Diss work (related works, algorithm research)
+
+## 30 Mar 2020
+* *3 hours* Diss work (Results merging and ndcg)
+
+## Week 27
+
+## 31 Mar 2020
+* *5 hours* creating setup instructions, checking project works on new machines, streamlining setup, preparing todo for what to do next
+* *2 hours* Diss work (Federation in info retrieval)
+
+## 1 Apr 2020
+* *4 hours* diss work (Federation in info retrieval)
+
+## 2 Apr 2020
+* *1 hour* meeting with nikos
+* *4 hours* fixed ndcg scoring, tidied federator class
+* *2 hours* laying groundwork for other diss sections
+
+## 3 Apr 2020
+* *4 hours* implemented rating normalisers
+* *1 hour* diss work (normalisers)
+
+## 4 Apr 2020
+* *4 hours* implemented rating normalisers
+* *2 hours* diss work (varied)
+
+## 5 Apr 2020
+* *6 hours* Created figure code, fixed alg metric for precision and added large dataset compatibility
+* *2 hours* diss work (created figures and future work)
+
+## Week 28
+
+## 6 Apr 2020

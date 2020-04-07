@@ -21,17 +21,20 @@ class AlgMapper:
     def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None, split_to_train=0, norm_func=None):
         if data_path is None:
             ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
-        else:
+            data = DataHandler(filename=ds_path, dtype=np.uint32, cols=4)
+        elif type(data_path) is str:
             ds_path = ROOT_DIR + data_path
+            data = DataHandler(filename=ds_path)
+        else:
+            data = DataHandler(ds=data_path)
 
-        data = DataHandler(filename=ds_path, dtype=np.uint32, cols=4)
         data.set_dataset(data.sort_dataset_by_col(movie_id_col))
         split_dataset = data.split_dataset_intermittently(n_subsets)
         split_data = split_dataset[split_to_train]
         self.untrained_data = split_dataset[np.arange(split_dataset.shape[0]) != split_to_train]  # all but one index
 
         """
-        knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(pd, split_data),
+        knnu = KNNUser(user_id, ds_ratings=helpers.convert_np_to_pandas(split_data),
                        p_thresh=0, u_thresh=0)
         self.knn_recs = knnu.make_recommendation(num_of_recs=-1)  # -1 means get all available
         """
@@ -39,7 +42,7 @@ class AlgMapper:
         alg_warp = LightFMAlg("warp", ds=split_data, labels_ds=labels_ds, normalisation=norm_func)  # warp or bpr
         self.lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
 
-        svd_train_split_filename = "/svd_train_split_{0}.npy".format(split_to_train)
+        svd_train_split_filename = "/svd_mapper_{0}.npy".format(split_to_train)
         svd = SurpriseSVD(ds=split_data, normalisation=norm_func, save_filename=svd_train_split_filename, load_filename=svd_train_split_filename)
         self.svd_recs = svd.get_top_n(user_id, n=-1)
 
@@ -59,7 +62,6 @@ class AlgMapper:
         svd_unique = self.remove_duplicates(self.svd_recs, 1)
 
         # Sort all entries by title so their indexes are synced
-        #knn_sorted = self.knn_recs[self.knn_recs[:, 1].argsort()]
         lfm_sorted = lfm_unique[lfm_unique[:, 1].argsort()]
         svd_sorted = svd_unique[svd_unique[:, 1].argsort()]
 

@@ -11,7 +11,7 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, normalisation=None, save=True, load=False, save_filename="/svd.npy", load_filename="/svd.npy"):
+    def __init__(self, ds=None, normalisation=None, save=True, load=True, save_filename="/svd.npy", load_filename="/svd.npy"):
         # Create mapper from movie id to title
         self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
 

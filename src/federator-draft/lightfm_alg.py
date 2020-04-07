@@ -70,8 +70,9 @@ class LightFMAlg:
                 break
 
     #  Generates recs for LFM.
-    def generate_rec(self, model, user_id, num_known=5, num_rec=10):
-        user_id -= 1  # lfm is zero indexed
+    def generate_rec(self, model, raw_user_id, num_known=5, num_rec=10):
+        raw_user_id -= 1  # lfm is zero indexed
+        user_id = self.user_inv_map[raw_user_id]
         n_users, n_items = self.train.shape
         # for user_id in user_ids:  # if i want to support multi user entry in the future
         known_positives = self.labels[self.train.tocsr()[user_id].indices]
@@ -114,5 +115,8 @@ if __name__ == "__main__":
     alg_bpr = LightFMAlg("bpr")  # warp or bpr
     alg_bpr.generate_rec(alg_bpr.model, user_id, num_rec=20)
 
-    alg_warp = LightFMAlg("warp")  # warp or bpr
+    ds_path = ROOT_DIR + "/datasets/ml-25m/ratings.csv"
+    dh = DataHandler(filename=ds_path)
+    dh = helpers.remove_below_threshold_user_and_items(dh, u_thresh=500, i_thresh=500)
+    alg_warp = LightFMAlg("warp", ds=dh.get_dataset(), labels_ds="/datasets/ml-25m/movies.csv")  # warp or bpr
     alg_warp.generate_rec(alg_warp.model, user_id, num_rec=20)

@@ -19,8 +19,8 @@ class GoldenList:
     
     lfm_metric: can be "warp" or "bpr"
     """
-    def generate_lists(self, user_id, data_path=None, labels_ds=None, ds_ratings=None, min_rating=4.0, num_of_recs=20,
-                       p_thresh=5, u_thresh=5, verbose=False, lfm_metric="warp", norm_func=None):
+    def generate_lists(self, user_id, data_path=None, labels_ds=None, num_of_recs=20, lfm_metric="warp",
+                       norm_func=None):
 
         #self.log.info("KNN Golden List:")
         #golden_knn = KNNUser(user_id, data_path=data_path, p_thresh=p_thresh, u_thresh=u_thresh, ds_ratings=ds_ratings,

@@ -21,8 +21,31 @@ def pretty_print_results(log, results, user_id):
             log.info('{0}: {1}, with score {2}'.format(row[0], row[1], row[2]))
 
 
-def convert_np_to_pandas(pd, a, first_col=0, last_col=3):
-    return pd.DataFrame(data=a[:, first_col:last_col], columns=['userId', 'movieId', 'rating'])
+def convert_np_to_pandas(a, columns=None):
+    if columns is None:
+        columns = ['userId', 'movieId', 'rating']
+    first_col = 0
+    last_col = len(columns)
+    return pd.DataFrame(data=a[:, first_col:last_col], columns=columns)
+
+
+def remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0):
+    df = convert_np_to_pandas(dh.get_dataset(), columns=['userId', 'movieId', 'rating', 'timestamp'])
+    num_users = df['userId'].value_counts().size
+    num_items = df['movieId'].value_counts().size
+    print("Shape before filter: {0}, no. users: {1}, no. items: {2}".format(str(df.shape), num_users, num_items))
+    df = df.groupby('userId').filter(lambda x: len(x) > u_thresh)
+    df = df.groupby('movieId').filter(lambda x: len(x) > i_thresh)
+    surviving_users = df['userId'].value_counts()
+    surviving_items = df['movieId'].value_counts()
+    print("Shape after filter: {0}, no. users: {1}, no. items: {2}".format(str(df.shape), surviving_users.size,
+                                                                           surviving_items.size))
+    dh.set_dataset(df.to_numpy())
+    return dh, surviving_users
+
+
+def get_users_with_min_ratings(users, min_ratings=10):
+    return users[users > min_ratings]
 
 
 """ 
