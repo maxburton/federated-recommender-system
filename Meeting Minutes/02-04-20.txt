@@ -38,5 +38,3 @@ Conclusion:
 -Limitations: e.g. assumptions made (ethics approval for human testing). Each of these links to an item in future work
 -Future Work: Human testing, greater variety of algorithms, unrelated datasets.
 -Reflections: i.e. if I could go back in time what would I do differently. A lot of background learning involved. 
-
-Should probably ask for another extension

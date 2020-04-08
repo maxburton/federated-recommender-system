@@ -2,3 +2,7 @@
 -Contributions - how should I phrase them? broad e.g. made the federator and how it federates?
 -Weaving gives the best ndcg score (makes sense considering how ndcg works), how do we go about showing other methods might be effective too?
 -placement of figures, do they matter? where should I put them in the latex text?
+-section titles should be very factual? or more playful
+-my background sections are quite explanatory, like im explaining something. Should this be saved for the design/implementation section, and instead should I use a more passive, factual tone? Do we need graphs/figures in background to explain the ideas?
+-should the background section discuss any specifics to my project?
+-Can you check my diss to see if the language is suitable and if I've gone into too little/too much detail at certain parts?

@@ -11,7 +11,7 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, normalisation=None, save=True, load=True, save_filename="/svd.npy", load_filename="/svd.npy"):
+    def __init__(self, ds=None, normalisation=None, save=True, load=False, save_filename="/svd.npy", load_filename="/svd.npy"):
         # Create mapper from movie id to title
         self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
 
@@ -48,14 +48,11 @@ class SurpriseSVD:
         #print(repr(results))
 
         self.trainset = self.data.build_full_trainset()
-        self.testset = self.trainset.build_anti_testset()
-
         self.alg.fit(self.trainset)
-        self.predictions = np.array(self.alg.test(self.testset))
 
         # Save SVD file to local storage (as an npy file)
-        if save:
-            np.save(save_filename, self.predictions)
+        #if save:
+        #    np.save(save_filename, self.predictions)
 
     def load_svd_from_file(self, filename):
         return np.load(filename, allow_pickle=True)
@@ -69,7 +66,7 @@ class SurpriseSVD:
         for rating in positive_ratings:
             self.log.info("%s, %.1f" % (self.mid2title[int(rating[1])], float(rating[2])))
 
-    def get_top_n(self, user_id, n=10, verbose=True):
+    def get_top_n(self, user_id, n=10, verbose=False):
         """Return the top-n recommendation for a user from a set of predictions.
 
         Args:
@@ -82,11 +79,16 @@ class SurpriseSVD:
         An np array, with recommendations in the form of [movieId, title, score]
         """
 
-        # First map the predictions to the user.
-        top_n = []
+        # Create a testset for user_id that doesn't include existing ratings
+        testset = np.array(self.trainset.build_anti_testset())
+        testset = testset[testset[:, 0].astype(int) == user_id]
 
-        mask = self.predictions[:, 0].astype(int) == user_id
-        for uid, iid, true_r, est, _ in self.predictions[mask]:
+        # Estimate ratings for user_id
+        self.predictions = np.array(self.alg.test(testset))
+
+        # Get user row and append all item scores
+        top_n = []
+        for uid, iid, true_r, est, _ in self.predictions:
             top_n.append((iid, est))
 
         if n == -1:
@@ -95,19 +97,18 @@ class SurpriseSVD:
         # Then sort the predictions for the user and retrieve the n highest ones.
         top_n.sort(key=lambda x: x[1], reverse=True)
         top_n = top_n[:n]
-
         recs = []
-
-        if verbose:
-            self.log.info("Recommendations for user %d" % user_id)
 
         # Get the top n recommendations
         for i in range(n):
             movie_id = int(top_n[i][0])
             score = top_n[i][1]
             recs.append([i+1, self.mid2title[movie_id], score])
-            if verbose:
-                self.log.info("%d: %s - %.3f" % (i+1, self.mid2title[movie_id], score))
+
+        if verbose:
+            self.print_user_favourites(user_id)
+            self.log.info("Recommendations for user %d" % user_id)
+            helpers.pretty_print_results(self.log, recs, user_id + 1)
 
         return np.array(recs)
 
@@ -115,5 +116,4 @@ class SurpriseSVD:
 if __name__ == '__main__':
     user_id = 1
     svd = SurpriseSVD()
-    svd.print_user_favourites(user_id)
     results = svd.get_top_n(user_id, n=20)

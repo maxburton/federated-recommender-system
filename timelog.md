@@ -305,3 +305,13 @@
 ## Week 28
 
 ## 6 Apr 2020
+* *3 hours* Finished work on large dataset compatibility
+* *1 hour* diss work
+
+## 7 Apr 2020
+* *4 hours* Fixed mappers using wrong lists for ndcg, tidied class and added weave federator 
+* *1 hour* diss work (updated graphs organised sections)
+
+## 8 Apr 2020
+* *3 hours* raw merge federator, graph for ndcg scores
+* *1 hour* diss work (Algorithms)

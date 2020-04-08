@@ -21,18 +21,20 @@ X-Check why theres a key error in golden list
 FINAL TODO:
 
 ==Implementation== (in ranked order
--normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
--run mapper on more data than the 1 split im using now
+X-normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
+X-run mapper on more data than the 1 split im using now
 -Potentially include tags/genres/implicit data in the mapper to improve it
 -Add other metrics as well as ndcg, for reporting purposes
 -Use different values of k in NDCG@k for reporting purposes
--Try recommender that just weaves together items from each recommender (e.g. 1. lfm1 2. svd1 3. lfm2 4. svd2 etc)
+X-Try recommender that just weaves together items from each recommender (e.g. 1. lfm1 2. svd1 3. lfm2 4. svd2 etc)
 -Try weighted recommender approach as well as mapped (should be more primitive than mapped)
 -Try switching recommender that simply picks the better recommender (should be more primitive than weighted)
 -Look at slides on hybrid recommenders in the rec sys course, and use their papers for ideas or to cite as existing works
 -Would different sized datasets be something to look at for method 1? could have that be weighted depending on size.
 -Potentially use h20.ai to find better mapping models
 -If i have time: look into a pipelined recommender
+-Group alg mapper titles by genre, and create a mapper for each genre (plus one that works for unknowns)
+-Apply user normalisation to mapper, i.e. create a unique mapper for each user (perhaps only use their normalised scores?)
 
 
 ==Dissertation==

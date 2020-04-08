@@ -237,7 +237,6 @@ class FederatorMapper:
         svd_split_filename = "/svd_split.npy".format()
         svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func, save_filename=svd_split_filename,
                           load_filename=svd_split_filename)
-        svd.print_user_favourites(self.user_id)
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
 
@@ -277,7 +276,7 @@ if __name__ == '__main__':
     # Allows n_jobs to be > 1
     multiprocessing.set_start_method('spawn')
 
-    norm_func = None
+    norm_func = helpers.gaussian_normalisation
     ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
     dh = DataHandler(filename=ds_path)
 
@@ -287,7 +286,7 @@ if __name__ == '__main__':
     # Get users who have at least rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
     user_id = np.min(min_ratings_users.index.astype(int))
-    user_id = 5
+    user_id = 1
     fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-latest-small/movies.csv",
                     norm_func=norm_func)
     fed.federate_results(50, reverse_mapping=False)

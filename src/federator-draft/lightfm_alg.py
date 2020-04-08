@@ -70,7 +70,7 @@ class LightFMAlg:
                 break
 
     #  Generates recs for LFM.
-    def generate_rec(self, model, raw_user_id, num_known=5, num_rec=10):
+    def generate_rec(self, model, raw_user_id, num_known=5, num_rec=10, verbose=False):
         raw_user_id -= 1  # lfm is zero indexed
         user_id = self.user_inv_map[raw_user_id]
         n_users, n_items = self.train.shape
@@ -105,8 +105,9 @@ class LightFMAlg:
                                      "Try lowering the number of recommendations desired in the future." % valid_recs)
                     break
 
-        self.print_known(user_id, known_positives, num_known=num_known)
-        helpers.pretty_print_results(self.log, recs, user_id+1)
+        if verbose:
+            self.print_known(user_id, known_positives, num_known=num_known)
+            helpers.pretty_print_results(self.log, recs, user_id+1)
         return np.array(recs)
 
 
