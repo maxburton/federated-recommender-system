@@ -111,5 +111,5 @@ if __name__ == '__main__':
     mapper = AlgMapper(user_id, split_to_train=0)
     svd, lfm = mapper.normalise_and_trim()
     model = mapper.learn_mapping(svd, lfm)
-    helpers.create_scatter_graph("Normalised SVD vs LFM scores", "Movie IDs", "Normalised Score", ["SVD", "LFM"],
-                                 ["red", "blue"], svd, lfm)
+    helpers.create_scatter_graph("Normalised SVD vs LFM scores", "Movie IDs", "Normalised Score", ["LFM", "SVD"],
+                                 ["blue", "orange"], lfm, svd)

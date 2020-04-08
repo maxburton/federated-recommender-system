@@ -1,1 +1,4 @@
 -discussing that this is not a bespoke solution, put this in problem formulation or design?
+-Contributions - how should I phrase them? broad e.g. made the federator and how it federates?
+-Weaving gives the best ndcg score (makes sense considering how ndcg works), how do we go about showing other methods might be effective too?
+-placement of figures, do they matter? where should I put them in the latex text?
