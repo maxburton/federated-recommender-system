@@ -14,7 +14,7 @@ class DataHandler:
         if filename:
             if first_row_names:
                 self.dataset = pd.read_csv(filename, dtype={'userId': 'int32', 'movieId': 'int32', 'rating': 'float32',
-                                           'timestamp': 'uint32'}).get_values()
+                                           'timestamp': 'uint32'}).to_numpy()
             else:
                 self.dataset = np.fromfile(filename, sep=",", dtype=dtype)
                 dataset_items = len(self.dataset)

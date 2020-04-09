@@ -19,6 +19,8 @@ class AlgMapper:
     log = logging.getLogger(__name__)
 
     def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None, split_to_train=0, norm_func=None):
+        self.log.info("Mapping algs...")
+
         if data_path is None:
             ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
             data = DataHandler(filename=ds_path, dtype=np.uint32, cols=4)
@@ -94,12 +96,12 @@ class AlgMapper:
             },
         ]
 
-        grid = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1, verbose=2)  # If crash, change to n_jobs=1
-        grid.fit(x_train, y_train)
+        grid = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1)  # If crash, change to n_jobs=1
+        grid.fit(x_train, y_train.ravel())
 
         #predicted = grid.predict(x_test)
 
-        self.log.info('Score:\t{}'.format(grid.score(x_test, y_test)))
+        self.log.info('Mapper RMSE Score: %.5f' % (-1 * grid.score(x_test, y_test)))
         return grid
 
 

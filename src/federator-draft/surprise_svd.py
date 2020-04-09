@@ -1,4 +1,4 @@
-from surprise import Dataset, Reader, SVD
+from surprise import Dataset, Reader, SVD, dump
 from definitions import ROOT_DIR
 import logging.config
 import pandas as pd
@@ -11,7 +11,8 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, normalisation=None, save=True, load=False, save_filename="/svd.npy", load_filename="/svd.npy"):
+    def __init__(self, ds=None, normalisation=None, save=True, load=True, save_filename="svd",
+                 load_filename="svd", base_folder="/svd_dumps/"):
         # Create mapper from movie id to title
         self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
 
@@ -31,31 +32,26 @@ class SurpriseSVD:
         reader = Reader(rating_scale=(lower, upper))
         self.data = Dataset.load_from_df(df, reader=reader)
 
-        save_filename = ROOT_DIR + save_filename
-        load_filename = ROOT_DIR + load_filename
+        save_filename = ROOT_DIR + base_folder + save_filename
+        load_filename = ROOT_DIR + base_folder + load_filename
 
+        self.log.info("Generating SVD model...")
         # Try to load existing SVD file from local storage (stored as an npy file)
         if load:
-            self.log.info("Attempting to load SVD file from storage...")
+            self.log.info("Attempting to load SVD alg from local storage...")
             try:
-                self.predictions = self.load_svd_from_file(load_filename)
-                return
+                _, self.alg = dump.load(load_filename)
+                self.log.info("SVD alg loaded!")
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating SVD from scratch.")
+                self.alg = SVD()
 
-        self.alg = SVD()
-        #results = cross_validate(algo, data, measures=['RMSE', 'MAE'])
-        #print(repr(results))
+                # Save SVD alg to local storage
+                if save:
+                    dump.dump(save_filename, algo=self.alg)
 
         self.trainset = self.data.build_full_trainset()
         self.alg.fit(self.trainset)
-
-        # Save SVD file to local storage (as an npy file)
-        #if save:
-        #    np.save(save_filename, self.predictions)
-
-    def load_svd_from_file(self, filename):
-        return np.load(filename, allow_pickle=True)
 
     def print_user_favourites(self, user_id, min_rating=4.0):
         ratings = np.array(self.data.raw_ratings)

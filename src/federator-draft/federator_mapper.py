@@ -25,17 +25,6 @@ class FederatorMapper:
         self.labels_ds = labels_ds
         self.norm_func = norm_func
 
-        # Get mapping model (default mapping is svd -> lfm)
-        mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
-        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
-        if not reverse_mapping:
-            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
-        else:
-            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
-
-        splits = mapper.untrained_data
-        self.dataset = np.vstack(splits)
-
         # Golden list for mapping method
         self.golden_lfm_mapper, self.golden_svd_mapper = GoldenList().generate_lists(self.user_id,
                                                                                      data_path=self.dataset,
@@ -48,6 +37,17 @@ class FederatorMapper:
         self.golden_svd_mapper[:, 2] = helpers.scale_scores(self.golden_svd_mapper[:, 2]).flatten()
 
         self.best_dcg_score = np.inf
+
+        # Get mapping model (default mapping is svd -> lfm)
+        mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
+        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
+        if not reverse_mapping:
+            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
+        else:
+            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
+
+        splits = mapper.untrained_data
+        self.dataset = np.vstack(splits)
 
     def remove_duplicate_reps(self, recs):
         titles = []
@@ -224,9 +224,10 @@ class FederatorMapper:
         plt.savefig("DASD_federation_techniques.pdf", format="pdf", bbox_inches='tight')
         plt.show()
 
-
     def federate_results(self, n, reverse_mapping=False):
         # TODO: check performance difference between mapping svd to lfm AND lfm to svd
+
+        self.log.info("Federating results (Mapping)...")
 
         # Get LFM's recs
         alg_warp = LightFMAlg("warp", ds=self.dataset, labels_ds=self.labels_ds, normalisation=self.norm_func)
@@ -268,7 +269,7 @@ class FederatorMapper:
 
         self.plot_bar_chart(ndcg_tuples)
 
-        print("test")
+        print("End")
         # TODO: Implement precision and recall and perhaps accuracy scores (would this work/tell me anything)
 
 

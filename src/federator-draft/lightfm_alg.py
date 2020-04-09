@@ -53,8 +53,8 @@ class LightFMAlg:
 
         self.train = helpers.build_interaction_matrix(num_users, num_items, helpers.parse(train_raw), min_rating,
                                                       self.item_inv_mapper, self.user_inv_map)
-        self.log.info(repr(self.train))
 
+        self.log.info("Generating LFM model...")
         self.model = LightFM(learning_rate=learning_rate, loss=loss_type)
         self.model.fit(self.train, epochs=30, num_threads=2)
 
@@ -106,6 +106,7 @@ class LightFMAlg:
                     break
 
         if verbose:
+            self.log.info(repr(self.train))
             self.print_known(user_id, known_positives, num_known=num_known)
             helpers.pretty_print_results(self.log, recs, user_id+1)
         return np.array(recs)

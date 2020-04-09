@@ -30,6 +30,7 @@ def convert_np_to_pandas(a, columns=None):
 
 
 def remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0):
+    print("Filtering items below threshold, user: %d, item: %d" % (u_thresh, i_thresh))
     df = convert_np_to_pandas(dh.get_dataset(), columns=['userId', 'movieId', 'rating', 'timestamp'])
     num_users = df['userId'].value_counts().size
     num_items = df['movieId'].value_counts().size
