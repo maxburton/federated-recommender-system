@@ -25,6 +25,17 @@ class FederatorMapper:
         self.labels_ds = labels_ds
         self.norm_func = norm_func
 
+        # Get mapping model (default mapping is svd -> lfm)
+        mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
+        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
+        if not reverse_mapping:
+            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
+        else:
+            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
+
+        splits = mapper.untrained_data
+        self.dataset = np.vstack(splits)
+
         # Golden list for mapping method
         self.golden_lfm_mapper, self.golden_svd_mapper = GoldenList().generate_lists(self.user_id,
                                                                                      data_path=self.dataset,
@@ -37,17 +48,6 @@ class FederatorMapper:
         self.golden_svd_mapper[:, 2] = helpers.scale_scores(self.golden_svd_mapper[:, 2]).flatten()
 
         self.best_dcg_score = np.inf
-
-        # Get mapping model (default mapping is svd -> lfm)
-        mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
-        lfm_normalised, svd_normalised = mapper.normalise_and_trim()
-        if not reverse_mapping:
-            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
-        else:
-            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
-
-        splits = mapper.untrained_data
-        self.dataset = np.vstack(splits)
 
     def remove_duplicate_reps(self, recs):
         titles = []
@@ -86,6 +86,7 @@ class FederatorMapper:
         federated_recs_truncated = federated_recs[:n]
 
         # Print the top n results
+        self.log.info("Federated results:")
         helpers.pretty_print_results(self.log, federated_recs_truncated, self.user_id)
 
         # Separate algorithm scores for graph mapping
