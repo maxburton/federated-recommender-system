@@ -82,8 +82,8 @@ def best_dcg_score(k=10):
     relevance_values = []
     for i in range(k):
         relevance_values.append(rank_scorer(i+1, k=k))
-    scores = np.arange(1, k+1)
-    return dcg_score(np.array([relevance_values]).astype(float), np.array([scores]).astype(float), k=k)
+    # Penalise scores (d in ndcg) by order of existing relevance values)
+    return dcg_score(np.array([relevance_values]).astype(float), np.array([range(k+1, 1, -1)]).astype(float), k=k)
 
 
 def rank_scorer(rank, k=10, var=None):
@@ -95,7 +95,7 @@ def rank_scorer(rank, k=10, var=None):
     else:
         golden_rank = 0
     """
-    return 1/rank
+    return 1/rank + 1
 
 
 def create_sum_column(ndcg):
@@ -110,10 +110,19 @@ def pick_random(recs, n):
 
 
 def scale_scores(scores):
-    scaler = RobustScaler()
+    robust_scaled = robust_scale_scores(scores)
+    minmax_scaled = min_max_scale_scores(robust_scaled)
+    return minmax_scaled
+
+
+def min_max_scale_scores(scores):
     minmax_scaler = MinMaxScaler()
-    robust_scaled = scaler.fit_transform(scores.reshape(-1, 1).astype(float))
-    return minmax_scaler.fit_transform(robust_scaled.reshape(-1, 1).astype(float))
+    return minmax_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
+
+
+def robust_scale_scores(scores):
+    robust_scaler = RobustScaler()
+    return robust_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
 
 
 def lfm_data_mapper(ds):

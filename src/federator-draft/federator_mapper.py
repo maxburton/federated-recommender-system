@@ -100,6 +100,13 @@ class FederatorMapper:
 
         return float(lfm_occs)/n, float(svd_occs)/n
 
+    def num_recs_in_both_algs(self, lfm_recs, svd_recs, k=10):
+        num_recs = 0
+        for title in lfm_recs[:, 1][:k]:
+            if np.isin(title, svd_recs[:, 1][:k]):
+                num_recs += 1
+        return num_recs
+
     """
     Merges scores together based on their scores after mapping from one algorithm to the other
     """
@@ -112,8 +119,11 @@ class FederatorMapper:
         federated_recs_truncated = federated_recs[:n]
 
         # Print the top n results
-        self.log.info("Federated results:")
+        self.log.info("Federated results (mapped):")
         helpers.pretty_print_results(self.log, federated_recs_truncated, self.user_id)
+
+        self.log.info("Number of movies recommended by both algorithms: %d" %
+                      self.num_recs_in_both_algs(lfm_recs, svd_recs, k=n))
 
         # Separate algorithm scores for graph mapping
         federated_lfm_recs_truncated = federated_recs_truncated[federated_recs_truncated[:, 3] == "lfm"]
@@ -285,20 +295,21 @@ class FederatorMapper:
         # Map one alg's score to another, then renormalise (reshape to convert back to 1d row array)
         if not reverse_mapping:
             svd_mapped = self.model.predict(svd_recs[:, 2].reshape(-1, 1).astype(float))
-            b = helpers.scale_scores(svd_mapped).reshape(-1)
+            svd_recs[:, 2] = helpers.min_max_scale_scores(svd_mapped).reshape(-1)
         else:
             lfm_mapped = self.model.predict(lfm_recs[:, 2].reshape(-1, 1).astype(float))
-            lfm_recs[:, 2] = helpers.scale_scores(lfm_mapped).reshape(-1)
+            lfm_recs[:, 2] = helpers.min_max_scale_scores(lfm_mapped).reshape(-1)
 
         # Get the maximum possible dcg score, if the rankings were to be perfectly ranked
-        self.best_dcg_score = helpers.best_dcg_score(n)
+        self.best_dcg_score = helpers.best_dcg_score(k=n)
+        self.log.info("Maximum NDCG Score: %.5f" % self.best_dcg_score)
 
         # Run all merging algorithms
         federated_recs, *merge_ndgc_tuple = self.merge_scores_by_mapping(lfm_recs, svd_recs, n=n)
         ndcg_tuples = np.array([merge_ndgc_tuple,
+                                self.merge_by_raw_scores(lfm_recs_unmapped, svd_recs_unmapped, n=n),
                                 self.weave_scores_before_mapping(lfm_recs_unmapped, svd_recs_unmapped, n=n),
                                 self.weave_scores_after_mapping(lfm_recs, svd_recs, n=n),
-                                self.merge_by_raw_scores(lfm_recs_unmapped, svd_recs_unmapped, n=n),
                                 self.alg_on_alg(lfm_recs_unmapped, n=n, title="Only LFM"),
                                 self.alg_on_alg(svd_recs_unmapped, n=n, title="Only SVD"),
                                 self.pick_random_baseline(federated_recs, n=n),
@@ -315,7 +326,7 @@ if __name__ == '__main__':
     # Allows n_jobs to be > 1
     multiprocessing.set_start_method('spawn')
 
-    norm_func = helpers.gaussian_normalisation
+    norm_func = None
     ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
     dh = DataHandler(filename=ds_path)
 
@@ -325,7 +336,7 @@ if __name__ == '__main__':
     # Get users who have at least rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
     user_id = np.min(min_ratings_users.index.astype(int))
-    user_id = 1
+    user_id = 5
     fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-latest-small/movies.csv",
                     norm_func=norm_func)
     fed.federate_results(50, reverse_mapping=False)

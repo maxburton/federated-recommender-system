@@ -12,6 +12,8 @@ from surprise_svd import SurpriseSVD
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Lasso, Ridge, SGDRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn import ensemble
 
 
 class AlgMapper:
@@ -19,6 +21,7 @@ class AlgMapper:
     log = logging.getLogger(__name__)
 
     def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None, split_to_train=0, norm_func=None):
+        norm_func = helpers.gaussian_normalisation
         self.log.info("Mapping algs...")
 
         if data_path is None:
@@ -78,6 +81,25 @@ class AlgMapper:
         return lfm_normalised_scores, svd_normalised_scores
 
     def learn_mapping(self, scores1, scores2):
+        mapping_func = self.learn_mapping_gbr
+        return mapping_func(scores1, scores2)
+
+    def learn_mapping_gbr(self, scores1, scores2):
+        x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)
+
+        params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
+                  'learning_rate': 0.01, 'loss': 'ls'}
+        clf = ensemble.GradientBoostingRegressor(**params)
+
+        clf.fit(x_train, y_train.ravel())
+        predicted = clf.predict(x_test)
+        self.log.debug(predicted)
+
+        mse = mean_squared_error(y_test, clf.predict(x_test))
+        print("MSE: %.4f" % mse)
+        return clf
+
+    def learn_mapping_linear(self, scores1, scores2):
         x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)
 
         pipe = Pipeline([
@@ -99,7 +121,7 @@ class AlgMapper:
         grid = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1)  # If crash, change to n_jobs=1
         grid.fit(x_train, y_train.ravel())
 
-        #predicted = grid.predict(x_test)
+        predicted = grid.predict(x_test)
 
         self.log.info('Mapper RMSE Score: %.5f' % (-1 * grid.score(x_test, y_test)))
         return grid
@@ -112,6 +134,6 @@ if __name__ == '__main__':
     user_id = 1
     mapper = AlgMapper(user_id, split_to_train=0)
     svd, lfm = mapper.normalise_and_trim()
-    model = mapper.learn_mapping(svd, lfm)
+    model = mapper.learn_mapping_gbr(svd, lfm)
     helpers.create_scatter_graph("Normalised SVD vs LFM scores", "Movie IDs", "Normalised Score", ["LFM", "SVD"],
                                  ["blue", "orange"], lfm, svd)
