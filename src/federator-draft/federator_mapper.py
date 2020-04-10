@@ -59,7 +59,7 @@ class FederatorMapper:
             titles.append(title)
         return np.array(unique_recs)
 
-    def calculate_ndcg(self, federated_recs, n=10, title=""):
+    def calculate_metrics(self, federated_recs, n=10, title=""):
         federated_recs = self.remove_duplicate_reps(federated_recs)
 
         # Federated ndcg score
@@ -70,10 +70,35 @@ class FederatorMapper:
         ndcg_score_lfm = dcg_score(golden_r_lfm, predicted_r_lfm, n) / self.best_dcg_score
         ndcg_score_svd = dcg_score(golden_r_svd, predicted_r_svd, n) / self.best_dcg_score
 
-        print("LFM %s NDCG@%d Score: %.5f" % (title, n, ndcg_score_lfm))
-        print("SVD %s NDCG@%d Score: %.5f" % (title, n, ndcg_score_svd))
+        pr_lfm, pr_svd = self.calculate_precision_recall(federated_recs, n=n)
 
-        return ndcg_score_lfm, ndcg_score_svd
+        print("LFM %s NDCG@%d Score: %.3f" % (title, n, ndcg_score_lfm))
+        print("SVD %s NDCG@%d Score: %.3f" % (title, n, ndcg_score_svd))
+
+        print("LFM %s precision/recall@%d Score: %.3f" % (title, n, pr_lfm))
+        print("SVD %s precision/recall@%d Score: %.3f" % (title, n, pr_svd))
+
+        return ndcg_score_lfm, ndcg_score_svd, pr_lfm, pr_svd
+
+    """
+    Note: Precision and recall are the same for our case, as the number of relevant documents is n and the
+    number of retrieved documents is n
+    """
+    def calculate_precision_recall(self, recs, n=10):
+        top_golden_lfm_titles = self.golden_lfm_mapper[:, 1][:n]
+        top_golden_svd_titles = self.golden_svd_mapper[:, 1][:n]
+
+        lfm_occs = 0
+        svd_occs = 0
+
+        for rec in recs:
+            title = rec[1]
+            if np.isin(title, top_golden_lfm_titles):
+                lfm_occs += 1
+            if np.isin(title, top_golden_svd_titles):
+                svd_occs += 1
+
+        return float(lfm_occs)/n, float(svd_occs)/n
 
     """
     Merges scores together based on their scores after mapping from one algorithm to the other
@@ -82,6 +107,7 @@ class FederatorMapper:
         # Merge and sort
         federated_recs = np.concatenate((lfm_recs, svd_recs), axis=0)
         federated_recs = federated_recs[np.argsort(federated_recs[:, 2])][::-1]  # sort in descending order of score
+        federated_recs = self.remove_duplicate_reps(federated_recs)  # remove the second copy of items that are recommended by both algs
         federated_recs[:, 0] = np.arange(1, federated_recs.shape[0]+1)  # Reset rankings
         federated_recs_truncated = federated_recs[:n]
 
@@ -100,14 +126,13 @@ class FederatorMapper:
                                         federated_svd_recs_truncated[:, 0].astype(int)])
 
         title = "Mapped"
-        ndcg_lfm, ndcg_svd = self.calculate_ndcg(federated_recs, n=n, title=title)
+        ndcg_lfm, ndcg_svd, pr_lfm, pr_svd = self.calculate_metrics(federated_recs, n=n, title=title)
 
-        return federated_recs, ndcg_lfm, ndcg_svd, title
+        return federated_recs, ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
 
     """
     Merges scores based on their normalised scores, unmapped
     """
-
     def merge_by_raw_scores(self, lfm_unmapped, svd_unmapped, n=10):
         # Merge and sort
         raw_merged_recs = np.concatenate((lfm_unmapped, svd_unmapped), axis=0)
@@ -115,9 +140,9 @@ class FederatorMapper:
         raw_merged_recs[:, 0] = np.arange(1, raw_merged_recs.shape[0]+1)  # Reset rankings
 
         title = "Raw Merge"
-        ndcg_lfm, ndcg_svd = self.calculate_ndcg(raw_merged_recs, n=n, title=title)
+        ndcg_lfm, ndcg_svd, pr_lfm, pr_svd = self.calculate_metrics(raw_merged_recs, n=n, title=title)
 
-        return ndcg_lfm, ndcg_svd, title
+        return ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
 
     """
     Weaves the top scoring items from each algorithm together, intermittently.
@@ -129,16 +154,17 @@ class FederatorMapper:
     """
     def weave_scores_before_mapping(self, lfm_unmapped, svd_unmapped, n=10):
         weaved_recs = []
-        max_i = n+1//2  # ensures this works for odd n
-        for i in range(max_i):
-            weaved_recs.append(lfm_unmapped[i])
-            if i*2 <= n:  # For odd n, will not append this for the final loop
-                weaved_recs.append(svd_unmapped[i+1])
+        for i in range(n*2):
+            try:
+                weaved_recs.append(lfm_unmapped[i])
+                weaved_recs.append(svd_unmapped[i + 1])
+            except IndexError:
+                self.log.warning("You don't have that many recommendations! Try lowering n")
 
         title = "Unmapped Weave"
-        ndcg_lfm, ndcg_svd = self.calculate_ndcg(weaved_recs, n=n, title=title)
+        ndcg_lfm, ndcg_svd, pr_lfm, pr_svd = self.calculate_metrics(weaved_recs, n=n, title=title)
 
-        return ndcg_lfm, ndcg_svd, title
+        return ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
 
     """
     Weaves the top scoring items from each algorithm together, intermittently.
@@ -155,16 +181,17 @@ class FederatorMapper:
         other_alg = svd if lfm_scores_gt_svd else lfm
 
         weaved_recs = []
-        max_i = n+1//2  # ensures this works for odd n
-        for i in range(max_i):
-            weaved_recs.append(top_alg[i])
-            if i*2 <= n:  # For odd n, will not append this for the final loop
-                weaved_recs.append(other_alg[i+1])
+        for i in range(n*2):
+            try:
+                weaved_recs.append(top_alg[i])
+                weaved_recs.append(other_alg[i + 1])
+            except IndexError:
+                self.log.warning("You don't have that many recommendations! Try lowering n")
 
         title = "Mapped Weave"
-        ndcg_lfm, ndcg_svd = self.calculate_ndcg(weaved_recs, n=n, title=title)
+        ndcg_lfm, ndcg_svd, pr_lfm, pr_svd = self.calculate_metrics(weaved_recs, n=n, title=title)
 
-        return ndcg_lfm, ndcg_svd, title
+        return ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
 
     """
     A baseline for NDCG, which picks randomly from a list of federated recommendations.
@@ -172,9 +199,9 @@ class FederatorMapper:
     def pick_random_baseline(self, federated_recs, n=10):
         # Pick random recs from the federated recs, to show the importance of the mapper
         title = "Random"
-        ndcg_lfm, ndcg_svd = self.calculate_ndcg(helpers.pick_random(federated_recs, n=n), n=n, title=title)
+        ndcg_lfm, ndcg_svd, pr_lfm, pr_svd = self.calculate_metrics(helpers.pick_random(federated_recs, n=n), n=n, title=title)
 
-        return ndcg_lfm, ndcg_svd, title
+        return ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
 
     """
     A baseline for NDCG, which replaces one algorithm's contributions with random items from that algorithm's
@@ -202,25 +229,30 @@ class FederatorMapper:
         lfm_with_random_svd = lfm_with_random_svd[np.argsort(lfm_with_random_svd[:, 2])][::-1]
 
         title = "One Alg Random"
-        ndcg_lfm, _ = self.calculate_ndcg(helpers.pick_random(lfm_with_random_svd, n=n), n=n, title=title)
-        _, ndcg_svd = self.calculate_ndcg(helpers.pick_random(svd_with_random_lfm, n=n), n=n, title=title)
+        ndcg_lfm, _, pr_lfm, _ = self.calculate_metrics(helpers.pick_random(lfm_with_random_svd, n=n), n=n, title=title)
+        _, ndcg_svd, _, pr_svd = self.calculate_metrics(helpers.pick_random(svd_with_random_lfm, n=n), n=n, title=title)
 
-        return ndcg_lfm, ndcg_svd, title
+        return ndcg_lfm, ndcg_svd, pr_lfm, pr_svd, title
+
+    """
+    A baseline for NDCG, which compares golden list of one alg to the recs from both golden lists.
+    """
+    def alg_on_alg(self, recs, n=10, title="Alg on Alg"):
+        rec_on_lfm, rec_on_svd, pr_lfm, pr_svd = self.calculate_metrics(recs, n=n, title=title)
+
+        return rec_on_lfm, rec_on_svd, pr_lfm, pr_svd, title
 
     def plot_bar_chart(self, ndcg):
-        summed_score = ndcg[:, 0].astype(float) + ndcg[:, 1].astype(float)
-        ndcg_scores = np.concatenate((ndcg, summed_score[..., None]), axis=1)
-        ndcg_scores = ndcg_scores[np.argsort(ndcg_scores[:, 3])][::-1]
-        x_range = np.arange(ndcg_scores.shape[0])
+        x_range = np.arange(ndcg.shape[0])
         width = 0.25
 
+        plt.figure(figsize=(6.4, 3.6))
         plt.title("NDCG Scores For Various Federation Techniques")
         plt.xlabel("Federation Technique")
         plt.ylabel("NDCG Score")
-        plt.xticks(ticks=x_range, labels=ndcg_scores[:, 2], rotation=90)
-        plt.bar(x_range, ndcg_scores[:, 0].astype(float), width=width, label="LFM")
-        plt.bar(x_range + width, ndcg_scores[:, 1].astype(float), width=width, label="SVD")
-        plt.bar(x_range - width, ndcg_scores[:, 3].astype(float), width=width, label="Total", color='m')
+        plt.xticks(ticks=x_range, labels=ndcg[:, 4], rotation=90)
+        plt.bar(x_range, ndcg[:, 0].astype(float), width=width,  label="LFM")
+        plt.bar(x_range + width, ndcg[:, 1].astype(float), width=width, label="SVD")
         plt.legend()
         plt.savefig("DASD_federation_techniques.pdf", format="pdf", bbox_inches='tight')
         plt.show()
@@ -242,19 +274,21 @@ class FederatorMapper:
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
 
-        # Scale scores but don't map them (reshape to convert back to 1d row array)
+        # Scale scores
+        lfm_recs[:, 2] = helpers.scale_scores(lfm_recs[:, 2]).reshape(-1)
+        svd_recs[:, 2] = helpers.scale_scores(svd_recs[:, 2]).reshape(-1)
+
+        # Copy scores but don't map them (reshape to convert back to 1d row array)
         lfm_recs_unmapped = copy.deepcopy(lfm_recs)
         svd_recs_unmapped = copy.deepcopy(svd_recs)
-        lfm_recs_unmapped[:, 2] = helpers.scale_scores(lfm_recs[:, 2]).reshape(-1)
-        svd_recs_unmapped[:, 2] = helpers.scale_scores(svd_recs[:, 2]).reshape(-1)
 
-        # Scale scores and map one to another (reshape to convert back to 1d row array)
+        # Map one alg's score to another, then renormalise (reshape to convert back to 1d row array)
         if not reverse_mapping:
-            lfm_recs[:, 2] = lfm_recs_unmapped[:, 2].reshape(-1)
-            svd_recs[:, 2] = self.model.predict(helpers.scale_scores(svd_recs[:, 2])).reshape(-1)
+            svd_mapped = self.model.predict(svd_recs[:, 2].reshape(-1, 1).astype(float))
+            b = helpers.scale_scores(svd_mapped).reshape(-1)
         else:
-            svd_recs[:, 2] = svd_recs_unmapped[:, 2].reshape(-1)
-            lfm_recs[:, 2] = self.model.predict(helpers.scale_scores(lfm_recs[:, 2])).reshape(-1)
+            lfm_mapped = self.model.predict(lfm_recs[:, 2].reshape(-1, 1).astype(float))
+            lfm_recs[:, 2] = helpers.scale_scores(lfm_mapped).reshape(-1)
 
         # Get the maximum possible dcg score, if the rankings were to be perfectly ranked
         self.best_dcg_score = helpers.best_dcg_score(n)
@@ -265,8 +299,11 @@ class FederatorMapper:
                                 self.weave_scores_before_mapping(lfm_recs_unmapped, svd_recs_unmapped, n=n),
                                 self.weave_scores_after_mapping(lfm_recs, svd_recs, n=n),
                                 self.merge_by_raw_scores(lfm_recs_unmapped, svd_recs_unmapped, n=n),
+                                self.alg_on_alg(lfm_recs_unmapped, n=n, title="Only LFM"),
+                                self.alg_on_alg(svd_recs_unmapped, n=n, title="Only SVD"),
                                 self.pick_random_baseline(federated_recs, n=n),
-                                self.replace_random_baseline(federated_recs, n=n)])
+                                self.replace_random_baseline(federated_recs, n=n)
+                                ])
 
         self.plot_bar_chart(ndcg_tuples)
 

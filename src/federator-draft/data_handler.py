@@ -6,7 +6,6 @@ import copy
 import exceptions as ex
 
 
-# TODO: Convert np to pandas
 class DataHandler:
     log = logging.getLogger(__name__)
 

@@ -314,4 +314,10 @@
 
 ## 8 Apr 2020
 * *3 hours* raw merge federator, graph for ndcg scores
+* *3 hours* fixed federator order bug and saving methods, optimised svd
 * *1 hour* diss work (Algorithms)
+
+## 9 Apr 2020
+* *2 hours* meeting with nikos
+* *2 hours* diss work (algorithm choice, updating ndcg section)
+* *4 hours* Improving ndcg, relevance values and mapper

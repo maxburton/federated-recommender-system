@@ -21,6 +21,7 @@ X-Check why theres a key error in golden list
 FINAL TODO:
 
 ==Implementation== (in ranked order
+-If both algs recommend the same item within the top n items, give it higher priority
 X-normalise user ratings (so users who always rate positively are penalised, e.g. take averages) (then we'll have negative ratings)
 X-run mapper on more data than the 1 split im using now
 -Potentially include tags/genres/implicit data in the mapper to improve it

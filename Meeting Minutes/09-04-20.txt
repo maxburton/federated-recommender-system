@@ -1,0 +1,24 @@
+could move surprise's specific implementation and background be more general (just svd, not surprises specific implementation)
+write a bit more for sgd
+can include the fact that the solution is not bespoke in contributions.
+contributions - both federators, for each one of these, include sub-contributions. Include how each of them perform.
+be more specific with dataset handling methods (ie they create synthetic datasets for surprise and lfm)
+contributions: open source project that can be used with future algs
+
+can compute raw lfm against svd golden list and vice versa for a baseline
+get precision and recall for ndcg methods
+vary values of ndcg@k to see how scores change, graph it by removing total bar and showing different k values next to each other
+
+have a graph mapping the reverse as well to see how ndcg is affected
+
+use rmse to calculate the results of the map on the original algs true scores
+
+roleplay as an extreme user to give qualititive feedback on recommenders e.g. i would watch these movies that have been recommended
+
+make graphs shorter but keep width
+
+future work: use genre in mapper, other regression methods
+
+its ok to be a bit informal
+
+extract sgd to work with both lfm and svd

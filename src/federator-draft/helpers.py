@@ -54,31 +54,24 @@ Returns the respective golden scores for the top k predicted items
 
 in_order will provide scores that sklearn's dcg method will take to rank the relevance values in the order provided
 """
-def order_top_k_items(golden, predicted, log, k=10, in_order=False, filename="/datasets/ml-latest-small/movies.csv"):
-    title2id = generate_movietitle2id_mapper(filename=filename)
-    golden_ids = {}
-    len_golden = len(golden)
+def order_top_k_items(golden, predicted, log, k=10, in_order=False):
+    golden_scores = {}
 
     # Get all movie ids in the golden list, mapped to their golden ranking/score
-    for i in range(len_golden):
-        golden_ids[title2id[golden[i][1]]] = golden[i]
+    for i in range(k):
+        golden_scores[golden[i][1]] = rank_scorer(i+1)
     predicted = predicted[:k]
 
-    # for each predicted item, get its respective score from the golden list
+    # for each predicted item's title, get its respective score from the golden list
     relevance_values = []
-    for prediction in predicted:
-        try:
-            # golden_score = golden_ids[title2id[title[1]]][2]  # golden list score
-            # We use the position in the golden list's ranking as a relevance value, since scores are mostly similar
-            #golden_rank = 1 - float(golden_ids[title2id[title[1]]][0]) / len_golden
-            rank = float(golden_ids[title2id[prediction[1]]][0])
-            relevance_values.append(rank_scorer(rank, k=k))
-        except KeyError:
-            log.warning("This item doesn't exist in the golden list, assigning score of 0")
+    for title in predicted[:, 1]:
+        # We use the position in the golden list's ranking as a relevance value, since scores are mostly similar
+        if title in golden_scores:
+            relevance_values.append(golden_scores[title])
+        else:
             relevance_values.append(0)
-            continue
 
-    # (We add another dimension to play nice with sklearn's dcg method)
+    # We add another dimension to play nice with sklearn's dcg method
     if in_order:
         return np.array([relevance_values]).astype(float), np.array([range(k+1, 1, -1)])
     else:
@@ -88,20 +81,27 @@ def order_top_k_items(golden, predicted, log, k=10, in_order=False, filename="/d
 def best_dcg_score(k=10):
     relevance_values = []
     for i in range(k):
-        relevance_values.append(rank_scorer(i, k=k))
+        relevance_values.append(rank_scorer(i+1, k=k))
     scores = np.arange(1, k+1)
     return dcg_score(np.array([relevance_values]).astype(float), np.array([scores]).astype(float), k=k)
 
 
 def rank_scorer(rank, k=10, var=None):
+    """
     if rank < k // 5:
         golden_rank = 2
     elif rank < k:
         golden_rank = 1
     else:
         golden_rank = 0
+    """
+    return 1/rank
 
-    return golden_rank
+
+def create_sum_column(ndcg):
+    summed_score = ndcg[:, 0].astype(float) + ndcg[:, 1].astype(float)
+    ndcg_scores = np.concatenate((ndcg, summed_score[..., None]), axis=1)
+    return ndcg_scores[np.argsort(ndcg_scores[:, 3])][::-1]
 
 
 def pick_random(recs, n):
@@ -110,9 +110,10 @@ def pick_random(recs, n):
 
 
 def scale_scores(scores):
-    min_max_scaler = MinMaxScaler()
-    scaled_score = min_max_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
-    return scaled_score
+    scaler = RobustScaler()
+    minmax_scaler = MinMaxScaler()
+    robust_scaled = scaler.fit_transform(scores.reshape(-1, 1).astype(float))
+    return minmax_scaler.fit_transform(robust_scaled.reshape(-1, 1).astype(float))
 
 
 def lfm_data_mapper(ds):
