@@ -45,7 +45,7 @@ class FederatorSplits:
         self.best_dcg_score = np.inf
 
     def calculate_metrics(self, federated_recs, n=10, title=""):
-        federated_recs = helpers.remove_duplicate_reps(federated_recs)
+        federated_recs = helpers.remove_duplicate_recs(federated_recs)
 
         # Federated ndcg score
         golden_r, predicted_r = helpers.order_top_k_items(self.golden, federated_recs, self.log, k=n)
@@ -111,6 +111,29 @@ class FederatorSplits:
             splits = isplits.run_on_splits_svd(self.user_id, norm_func=norm_func)
 
         return splits
+
+    def weave(self, splits, n=10):
+        len_splits = splits.shape[0]
+        full_passes = n // len_splits * 2
+
+        sorted_indices = []
+        for i in range(len_splits):
+            # Append split index to its max score
+            sorted_indices.append([i, np.max(splits[i][:, 2].astype(float))])
+        # sort in descending order of score
+        sorted_indices = np.array(sorted_indices)
+        sorted_indices = sorted_indices[np.argsort(sorted_indices[:, 1])][::-1]
+
+        weave_recs = []
+        for i in range(full_passes):
+            for j in range(len_splits):
+                # Append top items from each split
+                weave_recs.append(splits[sorted_indices[j][0].astype(int)][i])
+
+        weave_recs = helpers.remove_duplicate_recs(weave_recs)
+        metrics = self.calculate_metrics(weave_recs, title="Weave", n=n)
+
+        return metrics
 
     def raw_merge(self, splits, n=10):
         raw_merge = np.vstack(tuple(splits))
@@ -191,11 +214,12 @@ class FederatorSplits:
         splits = self.run_on_splits(n_subsets=n_subsets, splitting_method=splitting_method, norm_func=norm_func)
         self.calculate_metrics_on_splits(splits, n=n)
 
-        metrics = [self.raw_merge(splits, n=n),
-                   self.db_size(splits, n=n),
-                   self.db_density(splits, n=n),
-                   self.user_activity(splits, n=n),
-                   self.ecors(splits, n=n),
+        metrics = [self.raw_merge(np.copy(splits), n=n),
+                   self.weave(np.copy(splits), n=n),
+                   self.db_size(np.copy(splits), n=n),
+                   self.db_density(np.copy(splits), n=n),
+                   self.user_activity(np.copy(splits), n=n),
+                   self.ecors(np.copy(splits), n=n),
                    ]
 
         print("done")
@@ -221,4 +245,4 @@ if __name__ == '__main__':
     splitting_method = "random"
     # splitting_method = [0.8, 0.05, 0.05, 0.05, 0.05]
     # splitting_method = [0.5, 0.3, 0.1, 0.05, 0.05]
-    fed.federate(splitting_method=splitting_method, n_subsets=20, n=50)
+    fed.federate(splitting_method=splitting_method, n_subsets=10, n=20)

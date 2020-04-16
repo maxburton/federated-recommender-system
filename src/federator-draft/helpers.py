@@ -101,7 +101,7 @@ def rank_scorer(rank, k=10, var=None):
 """
 remove the second copy of items that are recommended by more than one alg
 """
-def remove_duplicate_reps(recs):
+def remove_duplicate_recs(recs):
     titles = []
     unique_recs = []
     for rec in recs:
@@ -116,10 +116,10 @@ def sort_and_reset_rankings(recs):
     recs = np.array(recs)
 
     # sort in descending order of score
-    recs = recs[np.argsort(recs[:, 2])][::-1]
+    recs = recs[np.argsort(recs[:, 2].astype(float))][::-1]
 
     # remove duplicates
-    recs = remove_duplicate_reps(recs)
+    recs = remove_duplicate_recs(recs)
 
     # reset rankings
     recs[:, 0] = np.arange(1, recs.shape[0] + 1)

@@ -34,7 +34,7 @@ class IndividualSplits:
         if splitting_method == "random":
             self.split_dataset, _ = data.split_dataset_randomly_ratio(n_subsets)
         elif isinstance(splitting_method, list):
-            self.split_dataset = data.split_dataset_by_ratio(splitting_method)
+            self.split_dataset = data.split_dataset_ratio_random_sort(splitting_method)
         else:
             self.split_dataset = data.split_dataset_intermittently(n_subsets)
 
@@ -43,7 +43,6 @@ class IndividualSplits:
         self.user_activity = self.get_user_activity()
         self.num_items_per_split = self.get_num_items_per_split()
         self.total_ratings = data.get_dataset().shape[0]
-
 
     def get_ratios(self):
         split_lens = []

@@ -44,7 +44,8 @@ class DataHandler:
         if ds is None:
             ds = self.dataset
         ds = copy.deepcopy(ds)
-        return np.random.shuffle(ds)
+        np.random.shuffle(ds)
+        return ds
 
     def sort_dataset_intermittently(self, num_of_partitions, ds=None):
         if ds is None:
@@ -83,11 +84,16 @@ class DataHandler:
         test = self.extract_whole_entries(n1 + n2, lower=lower, upper=upper, col=col, ds=ds, delete=delete)
         return train, test
 
+    def split_dataset_ratio_random_sort(self, ratios, ds=None):
+        if ds is None:
+            ds = self.dataset
+        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_randomly(ds)), ratios
+
     def split_dataset_randomly_ratio(self, num_of_partitions, ds=None):
         if ds is None:
             ds = self.dataset
         ratios = np.random.dirichlet(np.ones(num_of_partitions), size=1)[0]
-        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_intermittently(num_of_partitions, ds=ds)), ratios
+        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_randomly(ds)), ratios
 
     def split_dataset_randomly_evenly(self, num_of_partitions, ds=None):
         if ds is None:

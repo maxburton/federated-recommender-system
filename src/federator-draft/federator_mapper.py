@@ -87,7 +87,7 @@ class FederatorMapper:
         plt.show()
 
     def calculate_metrics(self, federated_recs, n=10, title=""):
-        federated_recs = helpers.remove_duplicate_reps(federated_recs)
+        federated_recs = helpers.remove_duplicate_recs(federated_recs)
 
         # Federated ndcg score
         golden_r_lfm, predicted_r_lfm = helpers.order_top_k_items(self.golden_lfm_mapper, federated_recs, self.log, k=n)

@@ -1,10 +1,4 @@
 Questions:
 
--Should explanations of metric scores be put in the evaluation section or earlier?
--Do I need to include setup instructions in the diss?
--Presentation: what should I focus on?
--How in depth to go into in background work?
--using terms like method 1 and 2 to refer to my two main algorithms throughout the doc: does that make sense?
--is using more data to train with better?
--Problem formulation section? Is this what the diss template refers to as the analysis section?
--extension?
+-Is it ok to have assumption sections for each design point as bullet points? or convert to prose
+-global design, sadd design and dasd design in 3 chapters, is this ok?
