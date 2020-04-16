@@ -98,6 +98,35 @@ def rank_scorer(rank, k=10, var=None):
     return 1/rank + 1
 
 
+"""
+remove the second copy of items that are recommended by more than one alg
+"""
+def remove_duplicate_reps(recs):
+    titles = []
+    unique_recs = []
+    for rec in recs:
+        title = rec[1]
+        if title not in titles:
+            unique_recs.append(rec)
+        titles.append(title)
+    return np.array(unique_recs)
+
+
+def sort_and_reset_rankings(recs):
+    recs = np.array(recs)
+
+    # sort in descending order of score
+    recs = recs[np.argsort(recs[:, 2])][::-1]
+
+    # remove duplicates
+    recs = remove_duplicate_reps(recs)
+
+    # reset rankings
+    recs[:, 0] = np.arange(1, recs.shape[0] + 1)
+
+    return recs
+
+
 def create_sum_column(ndcg):
     summed_score = ndcg[:, 0].astype(float) + ndcg[:, 1].astype(float)
     ndcg_scores = np.concatenate((ndcg, summed_score[..., None]), axis=1)

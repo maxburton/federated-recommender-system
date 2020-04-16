@@ -21,7 +21,9 @@ class AlgMapper:
     log = logging.getLogger(__name__)
 
     def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None, split_to_train=0, norm_func=None):
-        norm_func = helpers.gaussian_normalisation
+        if norm_func is None:
+            norm_func = helpers.gaussian_normalisation
+
         self.log.info("Mapping algs...")
 
         if data_path is None:

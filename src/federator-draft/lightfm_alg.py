@@ -3,6 +3,7 @@ from lightfm import LightFM
 from definitions import ROOT_DIR
 import logging.config
 from data_handler import DataHandler
+import random
 import helpers
 
 
@@ -69,10 +70,31 @@ class LightFMAlg:
                 print("User has no more favourites!")
                 break
 
+    # Generates random recs if user does not exist
+    def generate_random_recs(self, n=10, verbose=False):
+        n_users, n_items = self.train.shape
+        scores = self.model.predict(0, np.arange(n_items))
+        top_items = self.labels[np.argsort(-scores)]
+        scores = scores[np.argsort(-scores)]
+        raw_recs = np.random.choice(top_items, size=n)
+        min_score = np.min(scores)
+        max_score = np.max(scores)
+        recs = []
+        for i in range(raw_recs.shape[0]):
+            recs.append([i + 1, raw_recs[i], random.uniform(min_score, max_score)])
+        if verbose:
+            self.log.info(repr(self.train))
+            helpers.pretty_print_results(self.log, recs, user_id+1)
+        return np.array(recs)
+
     #  Generates recs for LFM.
     def generate_rec(self, model, raw_user_id, num_known=5, num_rec=10, verbose=False):
         raw_user_id -= 1  # lfm is zero indexed
-        user_id = self.user_inv_map[raw_user_id]
+        try:
+            user_id = self.user_inv_map[raw_user_id]
+        except KeyError:
+            self.log.info("User doesn't exist in dataset, returning random recs")
+            return self.generate_random_recs(n=num_rec, verbose=verbose)
         n_users, n_items = self.train.shape
         # for user_id in user_ids:  # if i want to support multi user entry in the future
         known_positives = self.labels[self.train.tocsr()[user_id].indices]
