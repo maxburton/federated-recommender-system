@@ -369,12 +369,11 @@ class FederatorMapper:
 
         titles = [metric_tuples[i][0] for i in range(len(metric_tuples))]
         metric_scores = np.array([metric_tuples[i][1] for i in range(len(metric_tuples))])
-        precision_scores = np.array([metric_tuples[i][2] for i in range(len(metric_tuples))])
+        precisions_scores = np.array([metric_tuples[i][2] for i in range(len(metric_tuples))])
         self.plot_bar_chart(titles, metric_scores)
-        self.plot_precision(titles, precision_scores)
+        self.plot_precision(titles, precisions_scores)
 
         print("End")
-        # TODO: Implement precision and recall and perhaps accuracy scores (would this work/tell me anything)
 
 
 if __name__ == '__main__':

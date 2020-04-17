@@ -2,3 +2,7 @@ Questions:
 
 -Is it ok to have assumption sections for each design point as bullet points? or convert to prose
 -global design, sadd design and dasd design in 3 chapters, is this ok?
+-default citation format is fine? and other defaults?
+-In design section, how specific do i need to be about implementation? right now im explaining the maths/equations behind my methods but not specific implementations
+-can I cite a web article? It claims theres a study but no link to it. For the sake of determining dataset sizes
+-implemented gbm, it performed better than linear regression, should compare these results or just show gbr?

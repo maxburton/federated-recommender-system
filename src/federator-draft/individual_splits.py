@@ -19,7 +19,8 @@ class IndividualSplits:
     logging.config.fileConfig(ROOT_DIR + "/logging.conf", disable_existing_loggers=False)
     log = logging.getLogger(__name__)
 
-    def __init__(self, n_subsets=5, movie_id_col=1, user_id=0, data_path=None, labels_ds=None, splitting_method="even"):
+    def __init__(self, n_subsets=5, movie_id_col=1, user_id=0, data_path=None, labels_ds=None, splitting_method="even",
+                 extract_pc=0):
         self.labels_ds = labels_ds
         self.user_id = user_id
 
@@ -30,12 +31,27 @@ class IndividualSplits:
 
         data = DataHandler(filename=ds_path, dtype=np.uint32, cols=4)
         data.set_dataset(data.sort_dataset_by_col(movie_id_col))
+        self.complete_dataset = np.copy(data.get_dataset())
 
         if splitting_method == "random":
+            self.log.info("Splitting method: %s" % "Random")
             self.split_dataset, _ = data.split_dataset_randomly_ratio(n_subsets)
-        elif isinstance(splitting_method, list):
+        elif extract_pc > 0 and isinstance(splitting_method, (list, np.ndarray)):
+            self.log.info("Splitting method: %s" % "Dense v Sparse")
+            unique_movies = np.unique(data.get_dataset()[:, 1])
+            mapper = helpers.generate_mapper_direct(unique_movies)
+            dense_split = data.extract_whole_entries(unique_movies.shape[0] // extract_pc, upper=len(mapper),
+                                                     delete=True, mapper=mapper)
+            ds_sorted_intermittently = data.sort_dataset_intermittently(len(splitting_method))
+            sparse_splits = data.split_dataset_by_ratio(splitting_method, ds=ds_sorted_intermittently)
+            splits = [sparse_splits[i] for i in range(sparse_splits.shape[0])]
+            splits.append(dense_split)
+            self.split_dataset = np.array(splits)
+        elif isinstance(splitting_method, (list, np.ndarray)):
+            self.log.info("Splitting method: %s" % "Large v Small")
             self.split_dataset = data.split_dataset_ratio_random_sort(splitting_method)
         else:
+            self.log.info("Splitting method: %s" % "Even")
             self.split_dataset = data.split_dataset_intermittently(n_subsets)
 
         self.ratios = self.get_ratios()
@@ -54,18 +70,18 @@ class IndividualSplits:
         return split_lens / np.sum(split_lens)
 
     def get_densities(self):
-        split_dens = []
+        split_unique_ratio = []
         for split in self.split_dataset:
             # Get the number of unique users and movies (e.g. dimensions of user-item matrix)
             users = np.unique(split[:, 0])
             movies = np.unique(split[:, 1])
             unique = users.shape[0] + movies.shape[0]
-            split_dens.append(unique)
+            split_unique_ratio.append(unique)
 
         # divide by total unique items to give a density factor between 0 and 1
-        split_dens = np.array(split_dens)
-        split_dens = split_dens / np.sum(split_dens)
-        return split_dens / self.ratios
+        split_unique_ratio = np.array(split_unique_ratio)
+        split_unique_ratio = split_unique_ratio / np.sum(split_unique_ratio)
+        return self.ratios / split_unique_ratio
 
     def get_user_activity(self):
         split_activity = []
@@ -80,7 +96,7 @@ class IndividualSplits:
     def get_num_items_per_split(self):
         split_count = []
         for split in self.split_dataset:
-            split_count.append(split.shape[0])
+            split_count.append(np.unique(split[:, 1]).shape[0])
         return split_count
 
     def run_on_splits_lfm(self, user_id, num_of_recs=20, alg="warp", norm_func=None):

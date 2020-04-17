@@ -62,12 +62,15 @@ class DataHandler:
     delete determines whether or not the entries should be deleted from self.dataset after extraction
     """
 
-    def extract_whole_entries(self, n, lower=1, upper=None, col=1, ds=None, delete=True):
+    def extract_whole_entries(self, n, lower=0, upper=None, col=1, ds=None, delete=True, mapper=None):
         if ds is None:
             ds = self.dataset
         if upper is None:
             upper = n
-        movie_ids = rand.sample(range(lower, upper + 1), n)
+        movie_ids = rand.sample(range(lower, upper), n)
+        # If external ids are not contiguous, map them first
+        if mapper:
+            movie_ids = [mapper[mid] for mid in movie_ids]
         extracted = ds[np.isin(ds[:, col], movie_ids)]  # returns a boolean array to index ds
         if delete:
             # negated boolean array "deletes" extracted rows by returning a new array without those rows
@@ -87,7 +90,7 @@ class DataHandler:
     def split_dataset_ratio_random_sort(self, ratios, ds=None):
         if ds is None:
             ds = self.dataset
-        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_randomly(ds)), ratios
+        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_randomly(ds))
 
     def split_dataset_randomly_ratio(self, num_of_partitions, ds=None):
         if ds is None:
@@ -128,4 +131,4 @@ class DataHandler:
         for i in range(num_of_partitions):  # split dataset according to the splits ratios defined
             current_index = np.sum(splits[:i])
             split_array.append(ds[current_index:(current_index + splits[i])])
-        return split_array
+        return np.array(split_array)

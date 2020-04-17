@@ -208,6 +208,11 @@ def generate_mapper(lst):
 
     return inverted_mapper
 
+def generate_mapper_direct(lst):
+    mapper = {k: v for k, v in enumerate(lst)}
+
+    return mapper
+
 
 def generate_movietitle2id_mapper(filename="/datasets/ml-latest-small/movies.csv"):
     filepath = ROOT_DIR + filename
