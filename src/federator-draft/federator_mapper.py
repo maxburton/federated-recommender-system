@@ -29,9 +29,9 @@ class FederatorMapper:
         mapper = AlgMapper(self.user_id, data_path=self.data_path, n_subsets=2, norm_func=self.norm_func)
         lfm_normalised, svd_normalised = mapper.normalise_and_trim()
         if not reverse_mapping:
-            self.model = mapper.learn_mapping(svd_normalised, lfm_normalised)
+            self.model, _ = mapper.learn_mapping(svd_normalised, lfm_normalised)
         else:
-            self.model = mapper.learn_mapping(lfm_normalised, svd_normalised)
+            self.model, _ = mapper.learn_mapping(lfm_normalised, svd_normalised)
 
         splits = mapper.untrained_data
         self.dataset = np.vstack(splits)
@@ -321,14 +321,15 @@ class FederatorMapper:
         self.log.info("Federating results (Mapping)...")
 
         # Get LFM's recs
-        alg_warp = LightFMAlg("warp", ds=self.dataset, labels_ds=self.labels_ds, normalisation=self.norm_func)
-        lfm_recs = alg_warp.generate_rec(alg_warp.model, user_id, num_rec=-1)
+        lfm_split_filename = "/lfm_split.npy".format()
+        alg_warp = LightFMAlg("warp", ds=self.dataset, labels_ds=self.labels_ds, normalisation=self.norm_func,
+                              sl_filename=lfm_split_filename)
+        lfm_recs = alg_warp.generate_rec(user_id, num_rec=-1)
         lfm_recs = np.c_[lfm_recs, np.full(lfm_recs.shape[0], "lfm")]  # append new column of "lfm" to recs
 
         # Get Surprise's SVD recs
         svd_split_filename = "/svd_split.npy".format()
-        svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func, save_filename=svd_split_filename,
-                          load_filename=svd_split_filename)
+        svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func, sl_filename=svd_split_filename)
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
 
@@ -380,17 +381,16 @@ if __name__ == '__main__':
     # Allows n_jobs to be > 1
     multiprocessing.set_start_method('spawn')
 
-    norm_func = helpers.shifted_normalisation
-    ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
+    norm_func = None
+    ds_path = ROOT_DIR + "/datasets/ml-25m/ratings.csv"
     dh = DataHandler(filename=ds_path)
 
     # Filter out users and items below threshold
-    dh, surviving_users = helpers.remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0)
+    dh, surviving_users, _ = helpers.remove_below_threshold_user_and_items(dh.dataset, u_thresh=50, i_thresh=50)
 
-    # Get users who have at least rated at least min_ratings movies
+    # Get users who have rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
     user_id = np.min(min_ratings_users.index.astype(int))
-    user_id = 5
-    fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-latest-small/movies.csv",
+    fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-25m/movies.csv",
                           norm_func=norm_func)
     fed.federate_results(50, reverse_mapping=False)

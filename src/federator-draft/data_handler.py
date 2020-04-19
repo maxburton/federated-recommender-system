@@ -92,6 +92,11 @@ class DataHandler:
             ds = self.dataset
         return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_randomly(ds))
 
+    def split_dataset_ratio_intermittent_sort(self, ratios, ds=None):
+        if ds is None:
+            ds = self.dataset
+        return self.split_dataset_by_ratio(ratios, ds=self.sort_dataset_intermittently(ratios.shape[0], ds=ds))
+
     def split_dataset_randomly_ratio(self, num_of_partitions, ds=None):
         if ds is None:
             ds = self.dataset

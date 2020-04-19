@@ -10,6 +10,7 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from collections import defaultdict
 
 from definitions import ROOT_DIR
+from data_handler import DataHandler
 
 
 def pretty_print_results(log, results, user_id):
@@ -29,11 +30,12 @@ def convert_np_to_pandas(a, columns=None):
     return pd.DataFrame(data=a[:, first_col:last_col], columns=columns)
 
 
-def remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0):
+def remove_below_threshold_user_and_items(ds, u_thresh=0, i_thresh=0):
     print("Filtering items below threshold, user: %d, item: %d" % (u_thresh, i_thresh))
-    df = convert_np_to_pandas(dh.get_dataset(), columns=['userId', 'movieId', 'rating', 'timestamp'])
+    df = convert_np_to_pandas(ds, columns=['userId', 'movieId', 'rating', 'timestamp'])
     num_users = df['userId'].value_counts().size
     num_items = df['movieId'].value_counts().size
+    ratings_before = df.shape[0]
     print("Shape before filter: {0}, no. users: {1}, no. items: {2}".format(str(df.shape), num_users, num_items))
     df = df.groupby('userId').filter(lambda x: len(x) > u_thresh)
     df = df.groupby('movieId').filter(lambda x: len(x) > i_thresh)
@@ -41,8 +43,10 @@ def remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0):
     surviving_items = df['movieId'].value_counts()
     print("Shape after filter: {0}, no. users: {1}, no. items: {2}".format(str(df.shape), surviving_users.size,
                                                                            surviving_items.size))
+    dh = DataHandler(filename=ROOT_DIR + "/datasets/ml-latest-small/ratings.csv")
     dh.set_dataset(df.to_numpy())
-    return dh, surviving_users
+    return dh, surviving_users, [ratings_before, df.shape[0], num_users, surviving_users.size,
+                                 num_items, surviving_items.size]
 
 
 def get_users_with_min_ratings(users, min_ratings=10):
@@ -235,7 +239,8 @@ def generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv
     return {k: v for k, v in zip(df_movies["movieId"], df_movies["title"])}
 
 
-def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymin=0, ymax=1.2, x=None, s=None, alpha=None):
+def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, x=None, s=1, alpha=0.8):
+    plt.figure(figsize=(4.8, 3.6))
     if x is None:
         x = np.linspace(0, len(args[0]), len(args[0]))
         for i in range(len(args)):
@@ -244,14 +249,12 @@ def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, ymi
         for i in range(len(args)):
             plt.scatter(x[i], args[i], s=s, c=colors[i], label=key_labels[i], alpha=alpha)
     plt.legend()
-    x_max = 0
-    for arg in args:
-        x_max += len(arg)
-    plt.axis([0, x_max+1, ymin, ymax])
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.tight_layout()
+    save_filename = title + ".pdf"
+    plt.savefig(save_filename, format="pdf", bbox_inches='tight')
     plt.show()
 
 
@@ -336,7 +339,7 @@ def gaussian_normalisation(ratings):
     normalised_ratings = np.array([(user_ratings[i] - avg_user_ratings[user_ids[i]]) / user_variance[user_ids[i]]
                                    for i in range(ratings.shape[0])])
 
-    scaled_normalised_ratings = RobustScaler().fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
+    scaled_normalised_ratings = MinMaxScaler(feature_range=(0, 5)).fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
     return scaled_normalised_ratings
 
 
@@ -380,6 +383,41 @@ def decoupling_normalisation(ratings):
     normalised_ratings = np.array([user_lt_probabilities[user_ids[i]][int(user_ratings[i]*2 - 1)] -
                                    user_probabilities[user_ids[i]][int(user_ratings[i]*2 - 1)]/2
                                    for i in range(ratings.shape[0])])
-    scaled_normalised_ratings = RobustScaler().fit_transform(normalised_ratings.reshape(-1, 1)).flatten()
+    scaled_normalised_ratings = MinMaxScaler(feature_range=(0, 5)).fit_transform(
+        normalised_ratings.reshape(-1, 1)).flatten()
     return scaled_normalised_ratings
 
+
+def build_anti_testset_memory_managed(self, user_id, fill=None):
+    """Return a list of ratings that can be used as a testset in the
+    :meth:`test() <surprise.prediction_algorithms.algo_base.AlgoBase.test>`
+    method.
+
+    The ratings are all the ratings that are **not** in the trainset, i.e.
+    all the ratings :math:`r_{ui}` where the user :math:`u` is known, the
+    item :math:`i` is known, but the rating :math:`r_{ui}`  is not in the
+    trainset. As :math:`r_{ui}` is unknown, it is either replaced by the
+    :code:`fill` value or assumed to be equal to the mean of all ratings
+    :meth:`global_mean <surprise.Trainset.global_mean>`.
+
+    Optimised to work on very large datasets (>2GB)
+
+    Args:
+        fill(float): The value to fill unknown ratings. If :code:`None` the
+            global mean of all ratings :meth:`global_mean
+            <surprise.Trainset.global_mean>` will be used.
+        user_id(numeric): The desired user whose predictions are to be
+            calculated.
+
+    Returns:
+        A list of tuples ``(uid, iid, fill)`` where ids are raw ids.
+    """
+    fill = self.global_mean if fill is None else float(fill)
+
+    user_id = self.to_inner_uid(int(user_id))
+    anti_testset = []
+    user_items = set([j for (j, _) in self.ur[user_id]])
+    anti_testset += [(self.to_raw_uid(user_id), self.to_raw_iid(i), fill) for
+                     i in self.all_items() if
+                     i not in user_items]
+    return anti_testset

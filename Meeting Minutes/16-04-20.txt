@@ -1,5 +1,5 @@
 add ecors to contributions
-check bib and see
+check bib and see if any titles etc need to be capitalised properly, check formatting in general of bib
 check blending description, does it really not apply to dasd?
 if we had to jump through hoops for design, discuss
 can compare lr and gbr, discuss a bit about lr and more about gbr, can move some to section 3

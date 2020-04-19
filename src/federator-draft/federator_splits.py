@@ -152,10 +152,12 @@ class FederatorSplits:
         length = metrics.shape[0]
 
         for i in range(metrics.shape[1]):
-            b = i / 10.0
-            k = np.arange(min_k, min_k + length)
-            label = "k=%.1f" % k
-            ax.plot(b, metrics[:, i], label=label, ls='--')
+            b = np.arange(0, 11) / 10.0
+            k = min_k + i
+            label = "k=%d" % k
+            # only plot lines that have variance, i.e. I hasn't affected too much
+            if np.max(metrics[i]) - np.min(metrics[i]) > 0.05:
+                ax.plot(b, metrics[i], label=label, ls='--')
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=4)
         save_filename = "SADD_ecors_b_scores_" + splitting_method + ".pdf"
@@ -202,7 +204,6 @@ class FederatorSplits:
 
     def weave(self, splits, n=10):
         len_splits = splits.shape[0]
-        full_passes = n // len_splits * 2
 
         sorted_indices = []
         for i in range(len_splits):
@@ -213,12 +214,14 @@ class FederatorSplits:
         sorted_indices = sorted_indices[np.argsort(sorted_indices[:, 1])][::-1]
 
         weave_recs = []
-        for i in range(full_passes):
+        i = 0
+        while len(weave_recs) <= n:
             for j in range(len_splits):
                 # Append top items from each split
                 weave_recs.append(splits[sorted_indices[j][0].astype(int)][i])
+            weave_recs = helpers.remove_duplicate_recs(weave_recs).tolist()
+            i += 1
 
-        weave_recs = helpers.remove_duplicate_recs(weave_recs)
         metrics = self.calculate_metrics(weave_recs, title="Weave", n=n)
 
         return metrics
@@ -396,7 +399,7 @@ if __name__ == '__main__':
     dh = DataHandler(filename=ds_path)
 
     # Filter out users and items below threshold
-    dh, surviving_users = helpers.remove_below_threshold_user_and_items(dh, u_thresh=0, i_thresh=0)
+    dh, surviving_users, _ = helpers.remove_below_threshold_user_and_items(dh.dataset, u_thresh=0, i_thresh=0)
 
     # Get users who have at least rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
@@ -406,6 +409,6 @@ if __name__ == '__main__':
                           labels_ds="/datasets/ml-latest-small/movies.csv", norm_func=norm_func)
     # splitting_method = "random"
     # splitting_method = [0.5, 0.3, 0.1, 0.05, 0.05]
-    splitting_method = "lvs"
+    splitting_method = "dvs"
     extract_pc = 10
-    fed.federate(splitting_method=splitting_method, extract_pc=extract_pc, max_subsets=20, n=20)
+    fed.federate(splitting_method=splitting_method, extract_pc=extract_pc, max_subsets=50, n=20)

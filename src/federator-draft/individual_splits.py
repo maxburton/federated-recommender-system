@@ -42,14 +42,13 @@ class IndividualSplits:
             mapper = helpers.generate_mapper_direct(unique_movies)
             dense_split = data.extract_whole_entries(unique_movies.shape[0] // extract_pc, upper=len(mapper),
                                                      delete=True, mapper=mapper)
-            ds_sorted_intermittently = data.sort_dataset_intermittently(len(splitting_method))
-            sparse_splits = data.split_dataset_by_ratio(splitting_method, ds=ds_sorted_intermittently)
+            sparse_splits = data.split_dataset_ratio_intermittent_sort(splitting_method)
             splits = [sparse_splits[i] for i in range(sparse_splits.shape[0])]
             splits.append(dense_split)
             self.split_dataset = np.array(splits)
         elif isinstance(splitting_method, (list, np.ndarray)):
             self.log.info("Splitting method: %s" % "Large v Small")
-            self.split_dataset = data.split_dataset_ratio_random_sort(splitting_method)
+            self.split_dataset = data.split_dataset_ratio_intermittent_sort(splitting_method)
         else:
             self.log.info("Splitting method: %s" % "Even")
             self.split_dataset = data.split_dataset_intermittently(n_subsets)
@@ -103,7 +102,7 @@ class IndividualSplits:
         split_recs = []
         for i in range(len(self.split_dataset)):
             alg_warp = LightFMAlg(alg, ds=self.split_dataset[i], labels_ds=self.labels_ds, normalisation=norm_func)
-            split_recs.append(alg_warp.generate_rec(alg_warp.model, user_id, num_rec=num_of_recs))
+            split_recs.append(alg_warp.generate_rec(user_id, num_rec=num_of_recs))
         return np.array(split_recs)
 
     def run_on_splits_svd(self, user_id, num_of_recs=20, norm_func=None):

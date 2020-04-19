@@ -4,6 +4,7 @@ import logging.config
 import pandas as pd
 import numpy as np
 import helpers
+import time
 
 
 class SurpriseSVD:
@@ -11,10 +12,10 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, normalisation=None, save=True, load=True, save_filename="svd",
-                 load_filename="svd", base_folder="/svd_dumps/"):
+    def __init__(self, ds=None, normalisation=None, save=True, load=True, sl_filename="svd", base_folder="/svd_dumps/",
+                 movies_filename="/datasets/ml-latest-small/movies.csv"):
         # Create mapper from movie id to title
-        self.mid2title = helpers.generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv")
+        self.mid2title = helpers.generate_id2movietitle_mapper(filename=movies_filename)
 
         # Read data from file (or ds)
         if ds is None:
@@ -23,35 +24,42 @@ class SurpriseSVD:
             df = pd.read_csv(ROOT_DIR + ds, usecols=[0, 1, 2])
         else:
             df = pd.DataFrame(ds[:, 0:3], columns=["userId", "movieId", "rating"])
+
         lower = np.min(df['rating'].to_numpy())
         upper = np.max(df['rating'].to_numpy())
 
         # Normalise ratings
         if normalisation:
+            self.unnormalised_ratings = np.copy(df['rating'].to_numpy())
             df['rating'] = normalisation(df[['userId', 'rating']].to_numpy())
+            self.normalised_ratings = np.copy(df['rating'].to_numpy())
         reader = Reader(rating_scale=(lower, upper))
         self.data = Dataset.load_from_df(df, reader=reader)
+        self.trainset = self.data.build_full_trainset()
 
-        save_filename = ROOT_DIR + base_folder + save_filename
-        load_filename = ROOT_DIR + base_folder + load_filename
+        sl_filename = ROOT_DIR + base_folder + sl_filename
 
+        start_time = time.time()
         self.log.info("Generating SVD model...")
         # Try to load existing SVD file from local storage (stored as an npy file)
         if load:
             self.log.info("Attempting to load SVD alg from local storage...")
             try:
-                _, self.alg = dump.load(load_filename)
+                _, self.alg = dump.load(sl_filename)
                 self.log.info("SVD alg loaded!")
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating SVD from scratch.")
                 self.alg = SVD()
+                self.alg.fit(self.trainset)
+        else:
+            self.alg = SVD()
+            self.alg.fit(self.trainset)
 
-                # Save SVD alg to local storage
-                if save:
-                    dump.dump(save_filename, algo=self.alg)
+        # Save SVD alg to local storage
+        if save:
+            dump.dump(sl_filename, algo=self.alg)
 
-        self.trainset = self.data.build_full_trainset()
-        self.alg.fit(self.trainset)
+        print("SVD train time: %.3f" % (time.time() - start_time))
 
     def print_user_favourites(self, user_id, min_rating=4.0):
         ratings = np.array(self.data.raw_ratings)
@@ -76,11 +84,13 @@ class SurpriseSVD:
         """
 
         # Create a testset for user_id that doesn't include existing ratings
-        testset = np.array(self.trainset.build_anti_testset())
+        testset = np.array(helpers.build_anti_testset_memory_managed(self.trainset, user_id))
         testset = testset[testset[:, 0].astype(int) == user_id]
 
         # Estimate ratings for user_id
+        start_time = time.time()
         self.predictions = np.array(self.alg.test(testset))
+        print("SVD predict time: %.3f" % (time.time() - start_time))
 
         # Get user row and append all item scores
         top_n = []
@@ -111,5 +121,6 @@ class SurpriseSVD:
 
 if __name__ == '__main__':
     user_id = 1
+
     svd = SurpriseSVD()
     results = svd.get_top_n(user_id, n=20)

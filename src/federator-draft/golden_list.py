@@ -30,7 +30,7 @@ class GoldenList:
         if verbose:
             self.log.info("LFM (%s) Golden List:" % lfm_metric)
         lfm_model = LightFMAlg(lfm_metric, ds=data_path, labels_ds=labels_ds, normalisation=norm_func)
-        golden_lfm = lfm_model.generate_rec(lfm_model.model, user_id, num_rec=num_of_recs, verbose=verbose)
+        golden_lfm = lfm_model.generate_rec(user_id, num_rec=num_of_recs, verbose=verbose)
 
         if verbose:
             self.log.info("SVD Golden List:")
