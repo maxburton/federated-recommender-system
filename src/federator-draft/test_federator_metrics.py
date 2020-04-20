@@ -27,8 +27,8 @@ def plot_thresholds(rating_threshold, ratings, users, items):
     fig = plt.figure()
     fig.set_size_inches(6.4, 2.4)
     ax = plt.subplot(111)
-    plt.title("Distribution of Number of Ratings, Users and Movies by Threshold")
-    plt.ylabel("Number Above Threshold")
+    plt.title("Users and Movies with Ratings Above Threshold")
+    plt.ylabel("Users/Items Above Threshold")
     plt.xlabel("Rating Threshold")
 
     #ax.plot(rating_threshold, ratings, label="total ratings")

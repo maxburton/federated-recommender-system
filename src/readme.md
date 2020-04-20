@@ -1,41 +1,35 @@
-# Readme
+#How to set up the project
+*Install Python3 and make sure it's added to your PATH
+*Install anaconda3 (and add it to PATH)
 
-Put a brief description of your code here. This should at least describe the file structure.
 
-## Build instructions
+## Automatic Installation (with pycharm) (recommended):
+*Add the anaconda3 interpreter to pycharm
+*Go to terminal settings and change shell path to: cmd.exe "/K" C:\ProgramData\Anaconda3\Scripts\activate.bat C:\ProgramData\Anaconda3
+NOTE: Anaconda3 path may be different depending on installation, check your Anaconda3 path first
+*Install existing conda env from environment.yml:
+`conda env create -f environment.yml`
+`conda activate FRS-conda`
 
-**You must** include the instructions necessary to build and deploy this project successfully. If appropriate, also include 
-instructions to run automated tests. 
+These steps should work on other IDEs too
 
-### Requirements
+## Manual Installation:
+*Create a new conda env:
+`conda create --name FRS-conda`
+`conda activate FRS-conda`
+*Install numpy on conda
+*Install pandas on conda
+*Install pytorch on conda
+*Install h5py on conda
+*Install scikit-learn on conda
+*Install matplotlib on conda
+`conda install -c conda-forge fuzzywuzzy`
+`conda install -c conda-forge scikit-surprise`
+`conda install -c conda-forge lightfm`
+*clone the spotlight repo: https://github.com/maciejkula/spotlight.git
+*Install it in your conda env using: 
+`python setup.py build`
+`python setup.py install`
 
-List the all of the pre-requisites software required to set up your project (e.g. compilers, packages, libraries, OS, hardware)
-
-For example:
-
-* Python 3.7
-* Packages: listed in `requirements.txt` 
-* Tested on Windows 10
-
-or another example:
-
-* Requires Raspberry Pi 3 
-* a Linux host machine with the `arm-none-eabi` toolchain (at least version `x.xx`) installed
-* a working LuaJIT installation > 2.1.0
-
-### Build steps
-
-List the steps required to build software. 
-
-Hopefully something simple like `pip install -e .` or `make` or `cd build; cmake ..`. In
-some cases you may have much more involved setup required.
-
-### Test steps
-
-List steps needed to show your software works. This might be running a test suite, or just starting the program; but something that could be used to verify your code is working correctly.
-
-Examples:
-
-* Run automated tests by running `pytest`
-* Start the software by running `bin/editor.exe` and opening the file `examples/example_01.bin`
-
+## Troubleshooting:
+*If you get a pip install error, you may need to install VS Build Tools: http://go.microsoft.com/fwlink/?LinkId=691126&fixForIE=.exe.

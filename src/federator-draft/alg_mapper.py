@@ -22,10 +22,7 @@ class AlgMapper:
     log = logging.getLogger(__name__)
 
     def __init__(self, user_id, n_subsets=5, movie_id_col=1, data_path=None, labels_ds=None, split_to_train=0,
-                 norm_func=None, use_full_dataset=True):
-
-        if norm_func is None:
-            norm_func = None
+                 norm_func=None, use_full_dataset=False):
 
         self.log.info("Mapping algs...")
 
@@ -53,10 +50,11 @@ class AlgMapper:
         self.lfm_recs = alg_warp.generate_rec(user_id, num_rec=-1)
 
         svd_train_split_filename = "/svd_mapper_{0}.npy".format(split_to_train)
-        svd = SurpriseSVD(ds=split_data, load=False, normalisation=norm_func, sl_filename=svd_train_split_filename)
+        svd = SurpriseSVD(ds=split_data, normalisation=norm_func, sl_filename=svd_train_split_filename)
         self.svd_recs = svd.get_top_n(user_id, n=-1)
 
-        self.normalised_ratings = (svd.unnormalised_ratings, svd.normalised_ratings)
+        if norm_func is not None:
+            self.normalised_ratings = (svd.unnormalised_ratings, svd.normalised_ratings)
 
     def plot_mse(self, gbr, lr, n_item_range):
         fig = plt.figure()
@@ -71,6 +69,19 @@ class AlgMapper:
         ax.legend()
         # Put a legend below current axis
         save_filename = "DASD_mse_scores.pdf"
+        fig.savefig(save_filename, format="pdf", bbox_inches='tight')
+        fig.show()
+
+    def plot_boxplot(self, mse, title="Difference in Training Data", ylabel="xtrain - ytrain"):
+        fig = plt.figure(figsize=(3.6, 3.6))
+        ax = plt.subplot(111)
+        plt.title(title)
+        plt.ylabel(ylabel)
+
+        ax.boxplot(mse, notch=True)
+        ax.set_xticklabels([])
+        # Put a legend below current axis
+        save_filename = "DASD_diff_boxplot.pdf"
         fig.savefig(save_filename, format="pdf", bbox_inches='tight')
         fig.show()
 
@@ -96,12 +107,12 @@ class AlgMapper:
         # Remove all entries that don't exist in both lists
         lfm_mask = np.in1d(lfm_sorted[:, 1], svd_sorted[:, 1])
         svd_mask = np.in1d(svd_sorted[:, 1], lfm_sorted[:, 1])
-        lfm_sorted = lfm_sorted[lfm_mask][:, 2].astype(float).reshape(-1, 1)
-        svd_sorted = svd_sorted[svd_mask][:, 2].astype(float).reshape(-1, 1)
+        lfm_sorted = lfm_sorted[lfm_mask]
+        svd_sorted = svd_sorted[svd_mask]
 
-        #lfm_normalised_scores = helpers.scale_scores(lfm_sorted[:, 2])
-        #svd_normalised_scores = helpers.scale_scores(svd_sorted[:, 2])
-        return lfm_sorted, svd_sorted
+        lfm_normalised_scores = helpers.scale_scores(lfm_sorted[:, 2]).astype(float).reshape(-1, 1)
+        svd_normalised_scores = helpers.scale_scores(svd_sorted[:, 2]).astype(float).reshape(-1, 1)
+        return lfm_normalised_scores, svd_normalised_scores
 
     def trim_to_item_cap(self, item_cap, x, y):
         try:
@@ -113,10 +124,15 @@ class AlgMapper:
         mapping_func = self.learn_mapping_gbr
         return mapping_func(scores1, scores2, item_cap=item_cap)
 
-    def learn_mapping_gbr(self, scores1, scores2, item_cap=None, cv=True):
+    def learn_mapping_gbr(self, scores1, scores2, item_cap=None, cv=False, plot=False):
         x_train, x_test, y_train, y_test = train_test_split(scores1, scores2, test_size=0.2)
         if item_cap:
             x_train, y_train = self.trim_to_item_cap(item_cap, x_train, y_train)
+
+        # plot difference boxplot
+        if plot:
+            all_diff = x_train - y_train
+            self.plot_boxplot(all_diff)
 
         if cv:
             pipe = Pipeline([
@@ -132,7 +148,9 @@ class AlgMapper:
                 }
             ]
 
-            clf = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=3, n_jobs=-1, verbose=1)  # If crash, change to n_jobs=1
+            # If crash, change to n_jobs=1
+            clf = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=3, n_jobs=-1,
+                               verbose=1)
             clf.fit(x_train, y_train.ravel())
         else:
             params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
@@ -144,7 +162,7 @@ class AlgMapper:
         self.log.debug(predicted)
 
         mse = mean_squared_error(y_test, clf.predict(x_test))
-        print("GBR rMSE: %.4f" % mse)
+        print("GBR MSE: %.4f" % mse)
         return clf, mse
 
     def learn_mapping_linear(self, scores1, scores2, item_cap=None, cv=True):
@@ -169,7 +187,8 @@ class AlgMapper:
                 },
             ]
 
-            lr = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1)  # If crash, change to n_jobs=1
+            # If crash, change to n_jobs=1
+            lr = GridSearchCV(pipe, scoring="neg_root_mean_squared_error", param_grid=param_grid, cv=5, n_jobs=-1)
             lr.fit(x_train, y_train.ravel())
         else:
             params = {'max_iter': 500, 'alpha': 0.1}
@@ -186,23 +205,18 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
     user_id = 5
-    norm = helpers.shifted_normalisation
+    norm = None
     mapper = AlgMapper(user_id, split_to_train=0, norm_func=norm)
     lfm, svd = mapper.normalise_and_trim()
-    helpers.create_scatter_graph("SVD vs LFM scores (Shifted)", "Movie IDs", "Normalised Score", ["Not Normalised", "Shifted"],
-                                 ["blue", "orange"], mapper.normalised_ratings[0][:1000],  mapper.normalised_ratings[1][:1000])
-    #helpers.create_scatter_graph("SVD vs LFM scores (Shifted)", "Movie IDs", "Normalised Score", ["LFM", "SVD"],
-    #                             ["blue", "orange"], lfm, svd)
+    helpers.create_scatter_graph("SVD vs LFM scores (Decouple)", "Movie IDs", "Normalised Score", ["LFM", "SVD"],
+                                 ["blue", "orange"], lfm, svd)
 
     model = mapper.learn_mapping_gbr(svd, lfm, cv=False)
 
-    n_item_range = np.arange(1, 500, 1)
+    """
+    n_item_range = np.arange(1, 500)
     mse_gbr = []
-    mse_lr = []
     for i in n_item_range:
         _, gbr = mapper.learn_mapping_gbr(svd, lfm, item_cap=i, cv=False)
-        _, lr = mapper.learn_mapping_linear(svd, lfm, item_cap=i, cv=False)
         mse_gbr.append(gbr)
-        mse_lr.append(lr)
-
-    mapper.plot_mse(mse_gbr, mse_lr, n_item_range)
+    """

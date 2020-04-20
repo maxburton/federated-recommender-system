@@ -148,8 +148,8 @@ def scale_scores(scores):
     return minmax_scaled
 
 
-def min_max_scale_scores(scores):
-    minmax_scaler = MinMaxScaler()
+def min_max_scale_scores(scores, range=(0, 1)):
+    minmax_scaler = MinMaxScaler(feature_range=(0, 1))
     return minmax_scaler.fit_transform(scores.reshape(-1, 1).astype(float))
 
 
@@ -240,7 +240,7 @@ def generate_id2movietitle_mapper(filename="/datasets/ml-latest-small/movies.csv
 
 
 def create_scatter_graph(title, x_label, y_label, key_labels, colors, *args, x=None, s=1, alpha=0.8):
-    plt.figure(figsize=(4.8, 3.6))
+    plt.figure(figsize=(3.6, 2.4))
     if x is None:
         x = np.linspace(0, len(args[0]), len(args[0]))
         for i in range(len(args)):

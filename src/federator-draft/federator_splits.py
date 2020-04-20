@@ -102,7 +102,30 @@ class FederatorSplits:
 
         return np.array(precision_scores)
 
-    def plot_ndcg_against_num_recs(self, titles, metrics, min_k=5, splitting_method="even"):
+    def plot_comparison(self, metrics, splitting_methods, titles):
+        fig = plt.figure(figsize=(3.6, 3.6))
+        ax = plt.subplot(111)
+        plt.title("NDCG@k Scores For Various Splitting Methods")
+        plt.ylabel("NDCG@k")
+        plt.xlabel("Splitting Method")
+
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+        length = metrics.shape[1]
+        markers = [".", "o", ".", "o", "d", "s", "^"]
+        k = np.arange(metrics.shape[0])
+        plt.xticks(ticks=k, labels=splitting_methods, rotation=90)
+        for i in range(length):
+            ax.scatter(k, metrics[:, i], label=titles[i], marker=markers[i])
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), fancybox=True, shadow=True, ncol=4)
+        save_filename = "SADD_comparison.pdf"
+        fig.savefig(save_filename, format="pdf", bbox_inches='tight')
+        plt.show()
+
+    def plot_ndcg_against_num_recs(self, titles, metrics, min_k=5, splitting_method="even", verbose=False):
         fig = plt.figure()
         ax = plt.subplot(111)
         plt.title("NDCG@k Scores For Various Federation Techniques & k")
@@ -114,15 +137,19 @@ class FederatorSplits:
         ax.set_position([box.x0, box.y0 + box.height * 0.1,
                          box.width, box.height * 0.8])
         length = metrics.shape[0]
+        markers = [".", "o", ".", "o", "d", "s", "^"]
+        ls = [":", ":", "--", "--", "--", "-", "-"]
 
         for i in range(metrics.shape[1]):
-            lw = 1.0
-            ls = '--'
-            if i > 4:
-                lw = 3.0
-                ls = '-'
+            lw = 1.5
+
             k = np.arange(min_k, min_k + length)
-            ax.plot(k, metrics[:, i], label=titles[i], ls=ls, lw=lw)
+            ax.plot(k, metrics[:, i], label=titles[i], ls=ls[i], lw=lw, marker=markers[i])
+            if verbose:
+                print(titles[i])
+                for j in metrics[:, i]:
+                    print(j)
+                print("AVG: %.5f" % np.mean(metrics[:, i]))
         # Put a legend below current axis
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=3)
         save_filename = "SADD_ndcgk_scores_" + splitting_method + ".pdf"
@@ -149,7 +176,6 @@ class FederatorSplits:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1,
                          box.width, box.height * 0.8])
-        length = metrics.shape[0]
 
         for i in range(metrics.shape[1]):
             b = np.arange(0, 11) / 10.0
@@ -385,7 +411,8 @@ class FederatorSplits:
             ecors_b.append(self.test_ecors_b(np.copy(splits), n=n))
 
         self.plot_ndcg_against_num_recs(titles, np.array(ndcg_scores), min_k=min_subsets, splitting_method=splitting_method)
-        self.plot_ecors_b(np.array(ecors_b), min_k=min_subsets, splitting_method=splitting_method)
+        self.ndcg_scores = ndcg_scores
+        self.titles = titles
 
         print("done")
 
@@ -404,11 +431,22 @@ if __name__ == '__main__':
     # Get users who have at least rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
     user_id = np.min(min_ratings_users.index.astype(int))
+
+    # manually set user id
     user_id = 5
     fed = FederatorSplits(user_id, alg="lfm", data_path=dh.get_dataset(),
                           labels_ds="/datasets/ml-latest-small/movies.csv", norm_func=norm_func)
     # splitting_method = "random"
     # splitting_method = [0.5, 0.3, 0.1, 0.05, 0.05]
-    splitting_method = "dvs"
+    splitting_method = "lvs"
     extract_pc = 10
-    fed.federate(splitting_method=splitting_method, extract_pc=extract_pc, max_subsets=50, n=20)
+    fed.federate(splitting_method=splitting_method, extract_pc=extract_pc, max_subsets=20, n=20)
+
+    #plot comparison
+    methods = ["even", "random", "lvs", "dvs"]
+    ndcg_scores = []
+    for method in methods:
+        fed.federate(splitting_method=method, extract_pc=extract_pc, min_subsets=20, max_subsets=20, n=20)
+        ndcg_scores.append(np.array(fed.ndcg_scores).flatten())
+    fed.plot_comparison(np.array(ndcg_scores), np.array(methods), fed.titles)
+

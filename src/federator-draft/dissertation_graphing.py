@@ -36,9 +36,10 @@ for i in range(len(a)):
     else:
         occurrences.append(a[i])
 
+plt.figure(figsize=(4.8, 2.0))
 plt.title("Research in Recommender Systems Over Time")
 plt.xlabel("Year")
 plt.ylabel("Occurences")
 plt.bar(year, occurrences)
-plt.savefig("popularity_over_time.pdf", format="pdf")
+plt.savefig("popularity_over_time.pdf", format="pdf", bbox_inches='tight')
 plt.show()

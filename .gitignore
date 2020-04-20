@@ -3,6 +3,9 @@
 /src/federator-draft/frs/*
 *.pdf
 *.npy
+/presentation/Presentation_Audio_data/*
+*.aup
+*.au
 
 # Except:
 !/src/federator-draft/datasets/ml-latest-small/

@@ -11,6 +11,7 @@ import numpy as np
 import copy
 import helpers
 import matplotlib.pyplot as plt
+import math
 
 import multiprocessing
 
@@ -53,8 +54,8 @@ class FederatorMapper:
         x_range = np.arange(metrics.shape[0])
         width = 0.25
 
-        plt.figure(figsize=(6.4, 3.6))
-        plt.title("NDCG Scores For Various Federation Techniques")
+        plt.figure(figsize=(6.4, 2.4))
+        plt.title("NDCG Scores For Various Federation Techniques (No Normalisation)")
         plt.xlabel("Federation Technique")
         plt.ylabel("NDCG Score")
         plt.xticks(ticks=x_range, labels=titles, rotation=90)
@@ -177,7 +178,7 @@ class FederatorMapper:
                                      federated_lfm_recs_truncated[:, 2].astype(float),
                                      federated_svd_recs_truncated[:, 2].astype(float),
                                      x=[federated_lfm_recs_truncated[:, 0].astype(int),
-                                        federated_svd_recs_truncated[:, 0].astype(int)])
+                                        federated_svd_recs_truncated[:, 0].astype(int)], s=2)
 
         return federated_recs, self.calculate_metrics(federated_recs, n=n, title=title)
 
@@ -262,6 +263,29 @@ class FederatorMapper:
 
         return self.calculate_metrics(blended_recs, n=n, title=title)
 
+    def discounted_blend(self, alg1, alg2, unmapped_alg2, n=10, k=0.3, title="Discounted Blend"):
+        # Get indices of titles that exist in both arrays
+        unmapped_alg2 = helpers.remove_duplicate_recs(unmapped_alg2)
+        length = alg2.shape[0]
+        blended_scores = []
+        for i in range(length):
+            unmapped_alg2_title = alg2[:, 1][i]
+            if unmapped_alg2[unmapped_alg2[:, 1] == unmapped_alg2_title].shape[0] > 0:
+                score_increase = k / math.log2(i+2)
+                original_score = unmapped_alg2[unmapped_alg2[:, 1] == unmapped_alg2_title][:, 2].astype(float)[0]
+                blended_scores.append(original_score + score_increase)
+            else:
+                blended_scores.append(alg2[:, 2][i])
+        alg2[:, 2] = np.array(blended_scores)
+
+        # Merge items into one array
+        blended_recs = np.vstack((alg1, alg2))
+
+        # Sort and re-rank items
+        blended_recs = helpers.sort_and_reset_rankings(blended_recs)
+
+        return self.calculate_metrics(blended_recs, n=n, title=title)
+
     """
     A baseline for NDCG, which picks randomly from a list of federated recommendations.
     """
@@ -329,7 +353,7 @@ class FederatorMapper:
 
         # Get Surprise's SVD recs
         svd_split_filename = "/svd_split.npy".format()
-        svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func, sl_filename=svd_split_filename)
+        svd = SurpriseSVD(ds=self.dataset, normalisation=self.norm_func)
         svd_recs = svd.get_top_n(self.user_id, n=-1)
         svd_recs = np.c_[svd_recs, np.full(svd_recs.shape[0], "svd")]  # append new column of "svd" to recs
 
@@ -344,16 +368,22 @@ class FederatorMapper:
         # Map one alg's score to another, then renormalise (reshape to convert back to 1d row array)
         if not reverse_mapping:
             svd_mapped = self.model.predict(svd_recs[:, 2].reshape(-1, 1).astype(float))
-            svd_recs[:, 2] = (svd_mapped).reshape(-1)
+            svd_recs[:, 2] = helpers.min_max_scale_scores(svd_mapped, range=(0.2, 1)).reshape(-1)
             svd_recs = helpers.sort_and_reset_rankings(svd_recs)
         else:
             lfm_mapped = self.model.predict(lfm_recs[:, 2].reshape(-1, 1).astype(float))
-            lfm_recs[:, 2] = helpers.min_max_scale_scores(lfm_mapped).reshape(-1)
+            lfm_recs[:, 2] = helpers.min_max_scale_scores(lfm_mapped, range=(0.2, 1)).reshape(-1)
             lfm_recs = helpers.sort_and_reset_rankings(lfm_recs)
 
         # Get the maximum possible dcg score, if the rankings were to be perfectly ranked
         self.best_dcg_score = helpers.best_dcg_score(k=n)
         self.log.info("Maximum NDCG Score: %.5f" % self.best_dcg_score)
+
+        # Run the mapped alg against its golden list
+        if reverse_mapping:
+            mapped_alg_on_alg = self.alg_on_alg(svd_recs, n=n, title="Only Mapped SVD")
+        else:
+            mapped_alg_on_alg = self.alg_on_alg(lfm_recs, n=n, title="Only Mapped LFM")
 
         # Run all merging algorithms
         federated_recs, merge_ndgc_list = self.merge_scores_by_mapping(lfm_recs, svd_recs, n=n)
@@ -362,8 +392,10 @@ class FederatorMapper:
                          self.weave_scores_before_mapping(lfm_recs_unmapped, svd_recs_unmapped, n=n),
                          self.weave_scores_after_mapping(lfm_recs, svd_recs, n=n),
                          self.blend_then_rerank(lfm_recs, svd_recs, n=n),
+                         self.discounted_blend(lfm_recs, svd_recs, svd_recs_unmapped, n=n),
                          self.alg_on_alg(lfm_recs_unmapped, n=n, title="Only LFM"),
                          self.alg_on_alg(svd_recs_unmapped, n=n, title="Only SVD"),
+                         mapped_alg_on_alg,
                          self.pick_random_baseline(federated_recs, n=n),
                          self.replace_random_baseline(federated_recs, n=n)
                          ]
@@ -382,15 +414,18 @@ if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
     norm_func = None
-    ds_path = ROOT_DIR + "/datasets/ml-25m/ratings.csv"
+    ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
     dh = DataHandler(filename=ds_path)
 
     # Filter out users and items below threshold
-    dh, surviving_users, _ = helpers.remove_below_threshold_user_and_items(dh.dataset, u_thresh=50, i_thresh=50)
+    dh, surviving_users, _ = helpers.remove_below_threshold_user_and_items(dh.dataset, u_thresh=0, i_thresh=0)
 
     # Get users who have rated at least min_ratings movies
     min_ratings_users = helpers.get_users_with_min_ratings(surviving_users, min_ratings=10)
     user_id = np.min(min_ratings_users.index.astype(int))
-    fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-25m/movies.csv",
-                          norm_func=norm_func)
-    fed.federate_results(50, reverse_mapping=False)
+
+    # set user manually
+    user_id = 5
+    fed = FederatorMapper(user_id, data_path=dh.get_dataset(), labels_ds="/datasets/ml-latest-small/movies.csv",
+                          norm_func=norm_func, reverse_mapping=True)
+    fed.federate_results(50, reverse_mapping=True)

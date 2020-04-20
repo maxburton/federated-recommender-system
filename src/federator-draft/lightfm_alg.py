@@ -15,7 +15,7 @@ class LightFMAlg:
 
     def __init__(self, loss_type="warp", ds=None, labels=None, labels_ds=None,
                  normalisation=None, learning_rate=0.05, min_rating=4.0, base_folder="/lfm_dumps/",
-                 save=True, load=True, sl_filename="lfm"):
+                 save=True, load=False, sl_filename="lfm"):
         if ds is None:
             ds_path = ROOT_DIR + "/datasets/ml-latest-small/ratings.csv"
             dh = DataHandler(filename=ds_path)
@@ -45,25 +45,20 @@ class LightFMAlg:
                 ds_path = ROOT_DIR + labels_ds
             self.labels = DataHandler(filename=ds_path).get_dataset()[:, 0:2]
 
-        train_raw, test_raw = dh.split_dataset_by_ratio([0.8, 0.2])
-
-        num_users, num_items, users, items = helpers.get_dimensions(helpers.parse(train_raw),
+        self.train_raw, test_raw = dh.split_dataset_by_ratio([0.8, 0.2])
+        self.num_users, self.num_items, users, items = helpers.get_dimensions(helpers.parse(self.train_raw),
                                                                     helpers.parse(test_raw))
-
-        # remove labels that aren't present in dataset (-1 to zero index)
-        self.labels = self.labels[:, 1][np.isin(self.labels[:, 0]-1, items)]
 
         self.item_inv_mapper = helpers.generate_mapper(items)
         self.user_inv_map = helpers.generate_mapper(users)
 
-        self.train = helpers.build_interaction_matrix(num_users, num_items, helpers.parse(train_raw),
-                                                      min_rating,
-                                                      self.item_inv_mapper, self.user_inv_map)
+        # remove labels that aren't present in dataset (-1 to zero index)
+        self.labels = self.labels[np.isin(self.labels[:, 0]-1, items)]
 
         sl_filename = ROOT_DIR + base_folder + sl_filename
 
         self.log.info("Generating LFM model...")
-        # Try to load existing SVD file from local storage (stored as an npy file)
+        # Try to load existing LFM file from local storage
         start_time = time.time()
         if load:
             self.log.info("Attempting to load LFM alg from local storage...")
@@ -72,11 +67,16 @@ class LightFMAlg:
                 self.log.info("LFM alg loaded!")
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating LFM from scratch.")
-
+                self.train = helpers.build_interaction_matrix(self.num_users, self.num_items, helpers.parse(
+                                                              self.train_raw), min_rating,
+                                                              self.item_inv_mapper, self.user_inv_map)
                 self.model = LightFM(learning_rate=learning_rate, loss=loss_type)
                 self.model.fit(self.train, epochs=20, num_threads=4)
 
         else:
+            self.log.info("Generating LFM from scratch.")
+            self.train = helpers.build_interaction_matrix(self.num_users, self.num_items, helpers.parse(self.train_raw),
+                                                          min_rating, self.item_inv_mapper, self.user_inv_map)
             self.model = LightFM(learning_rate=learning_rate, loss=loss_type)
             self.model.fit(self.train, epochs=20, num_threads=4)
 
@@ -98,9 +98,8 @@ class LightFMAlg:
 
     # Generates random recs if user does not exist
     def generate_random_recs(self, n=10, verbose=False):
-        n_users, n_items = self.train.shape
-        scores = self.model.predict(0, np.arange(n_items))
-        top_items = self.labels[np.argsort(-scores)]
+        scores = self.model.predict(0, np.arange(self.num_items))
+        top_items = self.labels[:, 1][np.argsort(-scores)]
         scores = scores[np.argsort(-scores)]
         raw_recs = np.random.choice(top_items, size=n)
         min_score = np.min(scores)
@@ -109,8 +108,7 @@ class LightFMAlg:
         for i in range(raw_recs.shape[0]):
             recs.append([i + 1, raw_recs[i], random.uniform(min_score, max_score)])
         if verbose:
-            self.log.info(repr(self.train))
-            helpers.pretty_print_results(self.log, recs, user_id+1)
+            helpers.pretty_print_results(self.log, recs, -1)
         return np.array(recs)
 
     #  Generates recs for LFM.
@@ -121,13 +119,14 @@ class LightFMAlg:
         except KeyError:
             self.log.info("User doesn't exist in dataset, returning random recs")
             return self.generate_random_recs(n=num_rec, verbose=verbose)
-        n_users, n_items = self.train.shape
 
-        known_positives = self.labels[self.train.tocsr()[user_id].indices]
+        known_positive_ids = self.train_raw[self.train_raw[:, 0] == user_id][:, 1]
+        known_positives = self.labels[self.labels[:, 0] == known_positive_ids]
+
         start_time = time.time()
-        scores = self.model.predict(user_id, np.arange(n_items))
+        scores = self.model.predict(user_id, np.arange(self.num_items))
         print("LFM predict time: %.3f" % (time.time() - start_time))
-        top_items = self.labels[np.argsort(-scores)]
+        top_items = self.labels[:, 1][np.argsort(-scores)]
         scores = scores[np.argsort(-scores)]
 
         recs = []
@@ -142,7 +141,7 @@ class LightFMAlg:
             # If num_recs = -1 or if it is greater than the number of valid recs, we simply return as many as there are
             try:
                 current_item = top_items[current_i]
-                if current_item not in known_positives:
+                if current_item not in known_positives[:, 1]:
                     recs.append([valid_recs + 1, current_item, scores[current_i]])
                     valid_recs += 1
                 current_i += 1
@@ -156,8 +155,7 @@ class LightFMAlg:
                     break
 
         if verbose:
-            self.log.info(repr(self.train))
-            self.print_known(user_id, known_positives, num_known=num_known)
+            self.print_known(user_id, known_positives[:, 1], num_known=num_known)
             helpers.pretty_print_results(self.log, recs, user_id+1)
         return np.array(recs)
 

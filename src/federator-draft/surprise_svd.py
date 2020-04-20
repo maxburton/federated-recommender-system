@@ -12,7 +12,7 @@ class SurpriseSVD:
     log = logging.getLogger(__name__)
 
     # Can save and load the svd array to file
-    def __init__(self, ds=None, normalisation=None, save=True, load=True, sl_filename="svd", base_folder="/svd_dumps/",
+    def __init__(self, ds=None, normalisation=None, save=True, load=False, sl_filename="svd", base_folder="/svd_dumps/",
                  movies_filename="/datasets/ml-latest-small/movies.csv"):
         # Create mapper from movie id to title
         self.mid2title = helpers.generate_id2movietitle_mapper(filename=movies_filename)
@@ -41,7 +41,7 @@ class SurpriseSVD:
 
         start_time = time.time()
         self.log.info("Generating SVD model...")
-        # Try to load existing SVD file from local storage (stored as an npy file)
+        # Try to load existing SVD file from local storage
         if load:
             self.log.info("Attempting to load SVD alg from local storage...")
             try:
@@ -49,10 +49,10 @@ class SurpriseSVD:
                 self.log.info("SVD alg loaded!")
             except FileNotFoundError:
                 self.log.info("File doesn't exist! Generating SVD from scratch.")
-                self.alg = SVD()
+                self.alg = SVD(n_epochs=30, n_factors=40)
                 self.alg.fit(self.trainset)
         else:
-            self.alg = SVD()
+            self.alg = SVD(n_epochs=30, n_factors=40)
             self.alg.fit(self.trainset)
 
         # Save SVD alg to local storage
@@ -84,7 +84,8 @@ class SurpriseSVD:
         """
 
         # Create a testset for user_id that doesn't include existing ratings
-        testset = np.array(helpers.build_anti_testset_memory_managed(self.trainset, user_id))
+        #testset = np.array(helpers.build_anti_testset_memory_managed(self.trainset, user_id))
+        testset = np.array(self.trainset.build_anti_testset())
         testset = testset[testset[:, 0].astype(int) == user_id]
 
         # Estimate ratings for user_id
@@ -120,7 +121,12 @@ class SurpriseSVD:
 
 
 if __name__ == '__main__':
-    user_id = 1
+    user_id = 5
 
     svd = SurpriseSVD()
-    results = svd.get_top_n(user_id, n=20)
+    results1 = svd.get_top_n(user_id, n=20)
+
+    svd = SurpriseSVD()
+    results2 = svd.get_top_n(user_id, n=20)
+
+    print("end")
