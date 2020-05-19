@@ -6,6 +6,7 @@
 /presentation/Presentation_Audio_data/*
 *.aup
 *.au
+/other/*
 
 # Except:
 !/src/federator-draft/datasets/ml-latest-small/
